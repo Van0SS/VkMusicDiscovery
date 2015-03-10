@@ -22,9 +22,18 @@ namespace VkMusicDiscovery
     /// </summary>
     public partial class WindowLogin : Window
     {
+        private string _accessToken;
 
-        public string AccessToken = "";
-        public int UserId;
+        public string AccessToken
+        {
+            get { return _accessToken; }
+        }
+
+        private int _userId;
+        public int UserId
+        {
+            get { return _userId; }
+        }
 
         private int appId = 4533969;
 
@@ -43,28 +52,25 @@ namespace VkMusicDiscovery
         {
             if (e.Uri.ToString().IndexOf("access_token") != -1)
             {
-                int userId = 0;
                 int expiresIn = 0;
                 Regex myReg = new Regex(@"(?<name>[\w\d\x5f]+)=(?<value>[^\x26\s]+)", RegexOptions.IgnoreCase | RegexOptions.Singleline);
                 foreach (Match m in myReg.Matches(e.Uri.ToString()))
                 {
                     if (m.Groups["name"].Value == "access_token")
                     {
-                        AccessToken = m.Groups["value"].Value;
+                        _accessToken = m.Groups["value"].Value;
                     }
                     else if (m.Groups["name"].Value == "user_id")
                     {
-                        UserId = Convert.ToInt32(m.Groups["value"].Value);
+                        _userId = Convert.ToInt32(m.Groups["value"].Value);
                     }
                     else if (m.Groups["name"].Value == "expires_in")
                     {
                         expiresIn = Convert.ToInt32(m.Groups["value"].Value);
                     }
                     // еще можно запомнить срок жизни access_token - expires_in,
-                    // если нужно
                 }
-                MessageBox.Show(String.Format("Ключ доступа: {0}\nUserID: {1}\n{2}", AccessToken, UserId, expiresIn));
-                Close();
+                Close(); //Выход в главные окно программы.
             }
         }
     }

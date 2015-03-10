@@ -29,10 +29,10 @@ namespace VkMusicDiscovery
             WindowLogin windowLogin = new WindowLogin();
             windowLogin.ShowDialog();
             _vkApi = new VkApi(windowLogin.AccessToken, windowLogin.UserId);
-            XmlDocument musicDocument = _vkApi.AudioGetRecommendations();
-            musicDocument.Save("aaaa.xml");
-            System.Diagnostics.Process.Start(Directory.GetCurrentDirectory());
-            MessageBox.Show(musicDocument.ToString());
+            List<Audio> musicDocument = _vkApi.AudioGetRecommendations(10);
+            //musicDocument.Save("aaaa.xml");
+            //System.Diagnostics.Process.Start(Directory.GetCurrentDirectory());
+            Close();
         }
     }
 }

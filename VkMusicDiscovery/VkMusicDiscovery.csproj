@@ -53,6 +53,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Audio.cs" />
+    <Compile Include="Enums\AudioGenres.cs" />
     <Compile Include="Enums\ScopeType.cs" />
     <Compile Include="VkApi.cs" />
     <Compile Include="WindowLogin.xaml.cs">

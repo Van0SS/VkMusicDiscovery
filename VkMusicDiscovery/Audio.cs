@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VkMusicDiscovery.Enums;
 
 namespace VkMusicDiscovery
 {
@@ -16,16 +17,16 @@ namespace VkMusicDiscovery
         public string Artist { get; set; }
         public string Title { get; set; }
         public uint Duration { get; set; }
-        public string Url { get; set; }
+        public Uri Url { get; set; }
         /// <summary>
-        /// 
+        /// Идентификатор текста аудиозаписи (если доступно).
         /// </summary>
-        public uint LyricsId { get; set; }
+        public uint? LyricsId { get; set; }
         /// <summary>
         /// Идентификатор альбома, в котором находится аудиозапись (если присвоен).
         /// </summary>
-        public uint AlbumId { get; set; }
-        public uint GenreId { get; set; }
+        public uint? AlbumId { get; set; }
+        public AudioGenres? GenreId { get; set; }
 
     }
 }
