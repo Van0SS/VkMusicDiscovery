@@ -16,26 +16,26 @@ namespace VkMusicDiscovery
     class VkApi
     {
         public string AccessToken = "";
-        public int UserId;
+        public int LoginUserId;
 
         private const string VkApiVersion = "v=5.28";
 
         public VkApi(string accessToken, int userId)
         {
             AccessToken = accessToken;
-            UserId = userId;
+            LoginUserId = userId;
         }
 
 
-        public List<Audio> AudioGetRecommendations(int count)
+        public List<Audio> AudioGetRecommendations(int count = 100, bool shuffle = false, int offset = 0, int? userId = null,  string targetAudio = "")
         {
             var parameters = new NameValueCollection();
             var audioList = new List<Audio>();
 
-            parameters["user_id"] = UserId.ToString();
+            parameters["user_id"] = LoginUserId.ToString();
             parameters["count"] = count.ToString();
-           // parameters["shuffle"] = "0";
-            //parameters["offset"] = "2";
+            parameters["shuffle"] =  Convert.ToInt32(shuffle).ToString();
+            parameters["offset"] = offset.ToString();
             XmlDocument recomendAudiosXml = ExecuteCommand("audio.getRecommendations", parameters);
             recomendAudiosXml.Save("aaaa.xml");
             XmlNode reNode = recomendAudiosXml.SelectSingleNode("response");

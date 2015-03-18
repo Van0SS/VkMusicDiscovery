@@ -3,6 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="WindowLogin" Height="300" Width="300">
     <Grid>
-        <WebBrowser x:Name="WebBrowserLogin" LoadCompleted="WebBrowserLogin_OnLoadCompleted"></WebBrowser>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <TextBlock TextAlignment="Center">
+            Loading:
+        </TextBlock>
+        <WebBrowser Grid.Row="1" x:Name="WebBrowserLogin" LoadCompleted="WebBrowserLogin_OnLoadCompleted"></WebBrowser>
     </Grid>
 </Window>
