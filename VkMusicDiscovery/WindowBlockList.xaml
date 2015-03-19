@@ -1,0 +1,25 @@
+﻿<Window x:Class="VkMusicDiscovery.WindowBlockList"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Block list" Height="300" Width="300">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TabControl>
+            <TabItem Header="Artists">
+                <TextBox AcceptsReturn="True">Artist</TextBox>
+            </TabItem>
+            <TabItem Header="Songs">
+                <TextBox>Artist - Song</TextBox>
+            </TabItem>
+        </TabControl>
+        
+        <StackPanel Grid.Column="1">
+            <Button Margin="5, 25, 5, 5">Import</Button>
+            <Button Margin="5">Export</Button>
+            
+        </StackPanel>
+    </Grid>
+</Window>

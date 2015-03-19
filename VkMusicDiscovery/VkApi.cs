@@ -39,7 +39,7 @@ namespace VkMusicDiscovery
                 parameters["count"] = count.ToString();
             if (shuffle == true) //По дефолту нет шафла.
                 parameters["shuffle"] = 1.ToString();
-            else if (offset != 0) //Если нет шафла то можно оффсетить, но если не 0.
+            if (offset != 0)
                 parameters["offset"] = offset.ToString();
             XmlDocument recomendAudiosXml = ExecuteCommand("audio.getRecommendations", parameters);
             
@@ -51,6 +51,17 @@ namespace VkMusicDiscovery
             //      </audio>
             //      <audio>
             XmlNode reNode = recomendAudiosXml.SelectSingleNode("response");
+            if (reNode == null)
+            {
+                var errNode = recomendAudiosXml.SelectSingleNode("error");
+                if (errNode != null)
+                {
+                    var errorMessage = "Error code: " + errNode.SelectSingleNode("error_code").InnerText
+                                       + "\nError message: " + errNode.SelectSingleNode("error_msg").InnerText;
+                    throw new Exception(errorMessage);
+                }
+                
+            }
             XmlNodeList reNode2 = reNode.ChildNodes;
 
             //  <items list="true"> // По другому не выбирается.
@@ -71,6 +82,17 @@ namespace VkMusicDiscovery
                 var genreIdNode = audioNode.SelectSingleNode("genre_id");
                 if (genreIdNode != null) //Жанр тоже.
                     curAudio.GenreId = (AudioGenres) Convert.ToUInt32(genreIdNode.InnerText);
+
+                
+                curAudio.Artist = char.ToUpper(curAudio.Artist[0]) + curAudio.Artist.Substring(1);
+                curAudio.Title = char.ToUpper(curAudio.Title[0]) + curAudio.Title.Substring(1);
+
+                //Если после конкатенации названия с добавлением " - " будет ещё такая же конструкция
+                //то будут проблемы с парсингом, да и просто не красиво.
+                curAudio.Artist = curAudio.Artist.Replace(" -", " ");
+                curAudio.Artist = curAudio.Artist.Replace("- ", " ");
+                curAudio.Title = curAudio.Title.Replace(" -", " ");
+                curAudio.Title = curAudio.Title.Replace("- ", " ");
 
                 audioList.Add(curAudio);
             }

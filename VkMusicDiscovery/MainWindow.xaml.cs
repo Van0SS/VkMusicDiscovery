@@ -19,6 +19,7 @@ using System.Windows.Shapes;
 using System.Xml;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using VkMusicDiscovery.Enums;
 
 namespace VkMusicDiscovery
 {
@@ -29,7 +30,9 @@ namespace VkMusicDiscovery
     {
         private VkApi _vkApi;
         private List<Audio> _audiosRecomendedList;
-        private IEnumerable<Audio> _fileteredRecomendedList;
+        private List<Audio> _fileteredRecomendedList = new List<Audio>();
+        private List<string> _blockedArtistList = new List<string>();
+        private List<string> _blockedSongList = new List<string>();
         public MainWindow()
         {
             InitializeComponent();
@@ -38,23 +41,18 @@ namespace VkMusicDiscovery
             _vkApi = new VkApi(windowLogin.AccessToken, windowLogin.UserId);
             _audiosRecomendedList = _vkApi.AudioGetRecommendations(10, true);
 
+            _fileteredRecomendedList.AddRange(_audiosRecomendedList);
+            DataGridAudio.ItemsSource = _fileteredRecomendedList;
 
-           // AudioDataGrid.ItemsSource
-            _fileteredRecomendedList = _audiosRecomendedList;
-            AudioDataGrid.ItemsSource = _fileteredRecomendedList;
-
-
-
-
-            //musicDocument.Save("aaaa.xml");
-            //System.Diagnostics.Process.Start(Directory.GetCurrentDirectory());
+            RbtnLangAll.IsChecked = true;
         }
 
         private void BtnRefresh_OnClick(object sender, RoutedEventArgs e)
         {
-            int count = Convert.ToInt32(TbCount.Text);
+            int count = Convert.ToInt32(TxbCount.Text);
             bool random = CbxRandom.IsChecked.Value;
-            _audiosRecomendedList =_vkApi.AudioGetRecommendations(count, random);
+            int offset = Convert.ToInt32(TxbOffset.Text);
+            _audiosRecomendedList = _vkApi.AudioGetRecommendations(count, random, offset);
             FilterByLangAndBindData();
         }
 
@@ -87,24 +85,92 @@ namespace VkMusicDiscovery
 
         private void FilterByLangAndBindData()
         {
+            _fileteredRecomendedList.Clear();
             if (RbtnLangRu.IsChecked == true)
             {
-                _fileteredRecomendedList = from track in _audiosRecomendedList
-                    where Regex.IsMatch((track.Artist + track.Title), "[А-Яа-я]")
-                    select track;
+                foreach (var track in _audiosRecomendedList)
+                {
+                    if (Regex.IsMatch((track.Artist + track.Title), "[А-Яа-я]"))
+                        _fileteredRecomendedList.Add(track);
+                }
             }
             else if (RbtnLangEng.IsChecked == true)
             {
-                _fileteredRecomendedList = from track in _audiosRecomendedList
-                    where !Regex.IsMatch((track.Artist + track.Title), "[А-Яа-я]")
-                    select track;
+                foreach (var track in _audiosRecomendedList)
+                {
+                    if (!Regex.IsMatch((track.Artist + track.Title), "[А-Яа-я]"))
+                        _fileteredRecomendedList.Add(track);
+                }
             }
             else
             {
-                _fileteredRecomendedList = _audiosRecomendedList;
-                return;
+                _fileteredRecomendedList.AddRange(_audiosRecomendedList);
             }
-            AudioDataGrid.ItemsSource = _fileteredRecomendedList;
+            BlockArtists();
+            BlockSongs();
+            DataGridAudio.Items.Refresh();
+        }
+
+        private void MenuItemBlockArtist_OnClick(object sender, RoutedEventArgs e)
+        {
+            foreach (var item in DataGridAudio.SelectedItems)
+            {
+                var artist = ((Audio) item).Artist.ToLowerInvariant();
+                if (!_blockedArtistList.Contains(artist))
+                    _blockedArtistList.Add(artist);
+            }
+            BlockArtists();
+            DataGridAudio.Items.Refresh();
+        }
+
+        private void BlockArtists()
+        {
+            for (int i = _fileteredRecomendedList.Count -1; i >= 0; i--)
+            {
+                if (_blockedArtistList.Contains(_fileteredRecomendedList[i].Artist.ToLowerInvariant()))
+                {
+                    _fileteredRecomendedList.RemoveAt(i);
+                }
+            }
+        }
+
+        private void MenuItemBlockSong_OnClick(object sender, RoutedEventArgs e)
+        {
+            foreach (var item in DataGridAudio.SelectedItems)
+            {
+                var track = (Audio) item;
+                var artTitle = ToArtistTitleLower(track);
+                if (!_blockedArtistList.Contains(artTitle))
+                    _blockedSongList.Add(artTitle);
+            }
+            BlockSongs();
+            DataGridAudio.Items.Refresh();
+        }
+
+        private static string ToArtistTitleLower(Audio track)
+        {
+            return track.Artist.ToLowerInvariant() + " - " + track.Title.ToLowerInvariant();
+        }
+
+        private void BlockSongs()
+        {
+            for (int i = _fileteredRecomendedList.Count - 1; i >= 0; i--)
+            {
+                if (_blockedSongList.Contains(ToArtistTitleLower(_fileteredRecomendedList[i])))
+                {
+                    _fileteredRecomendedList.RemoveAt(i);
+                }
+            }
+        }
+
+        /*private void TxbCount_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (Char.IsDigit(e.))
+        }*/
+
+        private void TxbCountOffset_OnPreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = "0123456789".IndexOf(e.Text) < 0;
         }
     }
 }

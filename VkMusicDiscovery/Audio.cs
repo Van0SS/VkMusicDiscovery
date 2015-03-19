@@ -25,7 +25,6 @@ namespace VkMusicDiscovery
         /// <summary>
         /// Идентификатор альбома, в котором находится аудиозапись (если присвоен).
         /// </summary>
-        public uint? AlbumId { get; set; }
         public AudioGenres? GenreId { get; set; }
 
     }
