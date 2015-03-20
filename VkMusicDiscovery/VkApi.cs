@@ -83,9 +83,8 @@ namespace VkMusicDiscovery
                 if (genreIdNode != null) //Жанр тоже.
                     curAudio.GenreId = (AudioGenres) Convert.ToUInt32(genreIdNode.InnerText);
 
-                
-                curAudio.Artist = char.ToUpper(curAudio.Artist[0]) + curAudio.Artist.Substring(1);
-                curAudio.Title = char.ToUpper(curAudio.Title[0]) + curAudio.Title.Substring(1);
+                curAudio.Artist = StaticFunc.ToLowerButFirstUp(curAudio.Artist);
+                curAudio.Title = StaticFunc.ToLowerButFirstUp(curAudio.Title);
 
                 //Если после конкатенации названия с добавлением " - " будет ещё такая же конструкция
                 //то будут проблемы с парсингом, да и просто не красиво.

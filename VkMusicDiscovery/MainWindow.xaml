@@ -36,7 +36,7 @@
                 <TextBlock VerticalAlignment="Center">Count:</TextBlock>
                 <TextBox x:Name="TxbCount" VerticalAlignment="Center" Width="28"
                          PreviewTextInput="TxbCountOffset_OnPreviewTextInput" MaxLength="3">10</TextBox>
-                <CheckBox x:Name="CbxRandom" VerticalAlignment="Center" IsChecked="True">Randomize</CheckBox>
+                <CheckBox x:Name="CbxRandom" VerticalAlignment="Center">Randomize</CheckBox>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock VerticalAlignment="Center">Offset: </TextBlock>
@@ -58,6 +58,7 @@
             </GroupBox>
             
             <Button x:Name="BtnDownloadall" VerticalAlignment="Top" Margin="5,20,5,0" FontSize="16" Click="BtnDownloadall_OnClick">Download all</Button>
+            <Button x:Name="BtnEditblocked" Click="BtnEditBlocked_OnClick">Edit blocked content</Button>
         </StackPanel>
 
     </Grid>

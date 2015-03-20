@@ -7,7 +7,7 @@ using VkMusicDiscovery.Enums;
 
 namespace VkMusicDiscovery
 {
-    class Audio
+    public class Audio
     {
         public uint Id { get; set; }
         /// <summary>

@@ -62,6 +62,7 @@
     <Compile Include="Audio.cs" />
     <Compile Include="Enums\AudioGenres.cs" />
     <Compile Include="Enums\ScopeType.cs" />
+    <Compile Include="StaticFunc.cs" />
     <Compile Include="VkApi.cs" />
     <Compile Include="WindowBlockList.xaml.cs">
       <DependentUpon>WindowBlockList.xaml</DependentUpon>

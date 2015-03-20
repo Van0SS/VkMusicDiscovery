@@ -19,9 +19,16 @@ namespace VkMusicDiscovery
     /// </summary>
     public partial class WindowBlockList : Window
     {
-        public WindowBlockList()
+        public WindowBlockList(List<MainWindow.ArtistToBind> blockedArtistList, List<MainWindow.ArtistTitleToBind> blockedSongList)
         {
             InitializeComponent();
+            DataGridArtists.ItemsSource = blockedArtistList;
+            DataGridSongs.ItemsSource = blockedSongList;
+        }
+
+        private void BtnImport_OnClick(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
         }
     }
 }

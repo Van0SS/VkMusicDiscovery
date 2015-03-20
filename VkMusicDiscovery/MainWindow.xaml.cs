@@ -28,11 +28,42 @@ namespace VkMusicDiscovery
     /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// Для привязки списка заблокированных авторов через DataGrid в окне WindowBlockList
+        /// </summary>
+        public class ArtistToBind
+        {
+           public string Artist { get; set; }
+
+            public ArtistToBind(string artist)
+            {
+                Artist = artist;
+            }
+            public ArtistToBind() //Для возможности добавлять новые сторки через DataGrid
+            { }
+        }
+        /// <summary>
+        /// Для привязки списка заблокированных песен через DataGrid в окне WindowBlockList
+        /// </summary>
+        public class ArtistTitleToBind
+        {
+            public string Artist { get; set; }
+            public string Title { get; set; }
+
+            public ArtistTitleToBind(string artist, string title)
+            {
+                Artist = artist;
+                Title = title;
+            }
+            public ArtistTitleToBind() //Для возможности добавлять новые сторки через DataGrid
+            { }
+        }
+
         private VkApi _vkApi;
         private List<Audio> _audiosRecomendedList;
         private List<Audio> _fileteredRecomendedList = new List<Audio>();
-        private List<string> _blockedArtistList = new List<string>();
-        private List<string> _blockedSongList = new List<string>();
+        private List<ArtistToBind> _blockedArtistList = new List<ArtistToBind>();
+        private List<ArtistTitleToBind> _blockedSongList = new List<ArtistTitleToBind>();
         public MainWindow()
         {
             InitializeComponent();
@@ -111,66 +142,93 @@ namespace VkMusicDiscovery
             DataGridAudio.Items.Refresh();
         }
 
+        /// <summary>
+        /// Добавление АРТИСТА в лист блокировки.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void MenuItemBlockArtist_OnClick(object sender, RoutedEventArgs e)
         {
             foreach (var item in DataGridAudio.SelectedItems)
             {
-                var artist = ((Audio) item).Artist.ToLowerInvariant();
-                if (!_blockedArtistList.Contains(artist))
-                    _blockedArtistList.Add(artist);
+                var blockArtist = ((Audio) item).Artist;
+                if (_blockedArtistList.All(a => a.Artist != blockArtist))
+                    _blockedArtistList.Add(new ArtistToBind(blockArtist));
             }
             BlockArtists();
             DataGridAudio.Items.Refresh();
         }
 
+        /// <summary>
+        /// Блокирование АРТИСТА по списку.
+        /// </summary>
         private void BlockArtists()
         {
             for (int i = _fileteredRecomendedList.Count -1; i >= 0; i--)
             {
-                if (_blockedArtistList.Contains(_fileteredRecomendedList[i].Artist.ToLowerInvariant()))
+                var curArtist = StaticFunc.ToLowerButFirstUp(_fileteredRecomendedList[i].Artist);
+                if (_blockedArtistList.Any(a => a.Artist == curArtist))
                 {
                     _fileteredRecomendedList.RemoveAt(i);
                 }
             }
         }
 
+        /// <summary>
+        /// Добавление ПЕСНИ в лист блокировки.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void MenuItemBlockSong_OnClick(object sender, RoutedEventArgs e)
         {
             foreach (var item in DataGridAudio.SelectedItems)
             {
-                var track = (Audio) item;
-                var artTitle = ToArtistTitleLower(track);
-                if (!_blockedArtistList.Contains(artTitle))
-                    _blockedSongList.Add(artTitle);
+                var blockSong = (Audio) item;
+                if (_blockedSongList.All(a => ((a.Artist != blockSong.Artist) ||
+                                              (a.Title != blockSong.Title))
+                    ))
+                {
+                    _blockedSongList.Add(new ArtistTitleToBind(blockSong.Artist, blockSong.Title));
+                }
             }
             BlockSongs();
             DataGridAudio.Items.Refresh();
         }
 
-        private static string ToArtistTitleLower(Audio track)
-        {
-            return track.Artist.ToLowerInvariant() + " - " + track.Title.ToLowerInvariant();
-        }
-
+        /// <summary>
+        /// Блокирование ПЕСНИ по списку.
+        /// </summary>
         private void BlockSongs()
         {
             for (int i = _fileteredRecomendedList.Count - 1; i >= 0; i--)
             {
-                if (_blockedSongList.Contains(ToArtistTitleLower(_fileteredRecomendedList[i])))
+                var blockSong = new ArtistTitleToBind(_fileteredRecomendedList[i].Artist, _fileteredRecomendedList[i].Title);
+                if (_blockedSongList.Any(a => (a.Artist == blockSong.Artist) &&
+                    (a.Title == blockSong.Title)))
                 {
                     _fileteredRecomendedList.RemoveAt(i);
                 }
             }
         }
-
-        /*private void TxbCount_OnKeyDown(object sender, KeyEventArgs e)
-        {
-            if (Char.IsDigit(e.))
-        }*/
-
+        /// <summary>
+        /// Проверка ввода для полей с числами.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void TxbCountOffset_OnPreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             e.Handled = "0123456789".IndexOf(e.Text) < 0;
+        }
+        /// <summary>
+        /// Вызов формы для редактирования списка заблокированных.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnEditBlocked_OnClick(object sender, RoutedEventArgs e)
+        {
+            WindowBlockList windowBlockList = new WindowBlockList(_blockedArtistList, _blockedSongList);
+            windowBlockList.ShowDialog();
+           // DataGridAudio.Items.Refresh();
         }
     }
 }
