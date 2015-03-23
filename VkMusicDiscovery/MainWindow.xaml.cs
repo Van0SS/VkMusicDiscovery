@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -28,56 +29,17 @@ namespace VkMusicDiscovery
     /// </summary>
     public partial class MainWindow : Window
     {
-        /// <summary>
-        /// Для привязки списка заблокированных авторов через DataGrid в окне WindowBlockList
-        /// </summary>
-        public class ArtistToBind
-        {
-            private string _artist;
-            public string Artist
-            {
-                get { return _artist; }
-                set
-                {
-                    if (String.IsNullOrEmpty(value))
-                        _artist = "VA";
-                    else
-                    {
-                        _artist = value;
-                    }
-
-                }
-            }
-
-            public ArtistToBind(string artist)
-            {
-                Artist = artist;
-            }
-            public ArtistToBind() //Для возможности добавлять новые сторки через DataGrid
-            { }
-        }
-        /// <summary>
-        /// Для привязки списка заблокированных песен через DataGrid в окне WindowBlockList
-        /// </summary>
-        public class ArtistTitleToBind
-        {
-            public string Artist { get; set; }
-            public string Title { get; set; }
-
-            public ArtistTitleToBind(string artist, string title)
-            {
-                Artist = artist;
-                Title = title;
-            }
-            public ArtistTitleToBind() //Для возможности добавлять новые сторки через DataGrid
-            { }
-        }
-
         private readonly VkApi _vkApi;
         private List<Audio> _audiosRecomendedList;
         private readonly List<Audio> _fileteredRecomendedList = new List<Audio>();
-        private readonly List<ArtistToBind> _blockedArtistList = new List<ArtistToBind>();
-        private readonly List<ArtistTitleToBind> _blockedSongList = new List<ArtistTitleToBind>();
+        public readonly List<ArtistToBind> BlockedArtistList = new List<ArtistToBind>();
+        public readonly List<ArtistTitleToBind> BlockedSongList = new List<ArtistTitleToBind>();
+        private BackgroundWorker worker;
+
+        private delegate void UpdateProgressBarDelegate(DependencyProperty dp, object value);
+
+        private string _directoryToDownload;
+        
         public MainWindow()
         {
             InitializeComponent();
@@ -90,6 +52,27 @@ namespace VkMusicDiscovery
             DataGridAudio.ItemsSource = _fileteredRecomendedList;
 
             RbtnLangAll.IsChecked = true;
+
+            worker = new BackgroundWorker();
+            worker.WorkerSupportsCancellation = true;
+            worker.DoWork += new DoWorkEventHandler(worker_DoWork);
+            worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(worker_RunWorkerCompleted);
+        }
+
+        private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            BtnDownloadall.Content = "Download All";
+            ProgressBarDownload.Value = 0;
+            TblProgressBar.Text = "Completed";
+        }
+
+        private void worker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            DownloadFiles();
+            if (worker.CancellationPending)
+            {
+                e.Cancel = true;
+            }
         }
 
         private void BtnRefresh_OnClick(object sender, RoutedEventArgs e)
@@ -103,23 +86,44 @@ namespace VkMusicDiscovery
 
         private void BtnDownloadall_OnClick(object sender, RoutedEventArgs e)
         {
+            if (BtnDownloadall.Content == "Cancel")
+            {
+                worker.CancelAsync();
+
+                return;
+            }
+            
             var dirDialog = new CommonOpenFileDialog {IsFolderPicker = true};
             if (dirDialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
+                _directoryToDownload = dirDialog.FileName;
+                ProgressBarDownload.Maximum = _fileteredRecomendedList.Count;
+                ProgressBarDownload.Value = 0;
+                BtnDownloadall.Content = "Cancel";
+                worker.RunWorkerAsync();
+            }
+        }
 
-                foreach (var track in _fileteredRecomendedList)
+        private void DownloadFiles()
+        {
+            UpdateProgressBarDelegate updateProgress = new UpdateProgressBarDelegate(ProgressBarDownload.SetValue);
+            double value = 0;
+            foreach (var track in _fileteredRecomendedList)
+            {
+                if (worker.CancellationPending)
                 {
-                    string fileName = track.Artist + " - " + track.Title + ".mp3"; //В вк пока только мр3.
-                    
-                    if (fileName.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) != -1) //Если есть недопустимые символы, то удалить.
-                        fileName = string.Concat(fileName.Split(System.IO.Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
-                    
-                    if (fileName.Length > 250) //Если имя файла длинее 250 символов - обрезать.
-                        fileName = fileName.Substring(0, 250);
-                    
-                    new WebClient().DownloadFileAsync(track.Url, dirDialog.FileName +
-                        '\\' + fileName);
+                    return;
                 }
+                string fileName = track.Artist + " - " + track.Title + ".mp3"; //В вк пока только мр3.
+
+                if (fileName.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) != -1) //Если есть недопустимые символы, то удалить.
+                    fileName = string.Concat(fileName.Split(System.IO.Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+
+                if (fileName.Length > 250) //Если имя файла длинее 250 символов - обрезать.
+                    fileName = fileName.Substring(0, 250);
+
+                new WebClient().DownloadFile(track.Url, _directoryToDownload + '\\' + fileName);
+                Dispatcher.Invoke(updateProgress, new object[] {ProgressBar.ValueProperty, ++value});
             }
         }
 
@@ -145,6 +149,7 @@ namespace VkMusicDiscovery
                 _fileteredRecomendedList.Add(track);
             }
             DataGridAudio.Items.Refresh();
+            TblProgressBar.Text = "Count: " + _fileteredRecomendedList.Count.ToString();
         }
 
         private bool FailCurLang(Audio track)
@@ -166,13 +171,13 @@ namespace VkMusicDiscovery
         private bool IsContentInBlockArtists(Audio track)
         {
             var curArtist = StaticFunc.ToLowerButFirstUp(track.Artist);
-            return (_blockedArtistList.Any(a => a.Artist == curArtist));
+            return (BlockedArtistList.Any(a => a.Artist == curArtist));
         }
 
         private bool IsContentInBlockSongs(Audio track)
         {
             var blockSong = new ArtistTitleToBind(track.Artist, track.Title);
-            return (_blockedSongList.Any(a => (a.Artist == blockSong.Artist) &&
+            return (BlockedSongList.Any(a => (a.Artist == blockSong.Artist) &&
                                               (a.Title == blockSong.Title)));
         }
         /// <summary>
@@ -186,8 +191,8 @@ namespace VkMusicDiscovery
             {
                 var blockArtist = ((Audio) item).Artist;
                 blockArtist = StaticFunc.ToLowerButFirstUp(blockArtist);
-                if (_blockedArtistList.All(a => a.Artist != blockArtist))
-                    _blockedArtistList.Add(new ArtistToBind(blockArtist));
+                if (BlockedArtistList.All(a => a.Artist != blockArtist))
+                    BlockedArtistList.Add(new ArtistToBind(blockArtist));
             }
             FilterAndBindData();
             DataGridAudio.Items.Refresh();
@@ -205,11 +210,11 @@ namespace VkMusicDiscovery
                 var blockSong = (Audio) item;
                 blockSong.Artist = StaticFunc.ToLowerButFirstUp(blockSong.Artist);
                 blockSong.Title = StaticFunc.ToLowerButFirstUp(blockSong.Title);
-                if (_blockedSongList.All(a => ((a.Artist != blockSong.Artist) ||
+                if (BlockedSongList.All(a => ((a.Artist != blockSong.Artist) ||
                                               (a.Title != blockSong.Title))
                     ))
                 {
-                    _blockedSongList.Add(new ArtistTitleToBind(blockSong.Artist, blockSong.Title));
+                    BlockedSongList.Add(new ArtistTitleToBind(blockSong.Artist, blockSong.Title));
                 }
             }
             FilterAndBindData();
@@ -232,7 +237,8 @@ namespace VkMusicDiscovery
         /// <param name="e"></param>
         private void BtnEditBlocked_OnClick(object sender, RoutedEventArgs e)
         {
-            WindowBlockList windowBlockList = new WindowBlockList(_blockedArtistList, _blockedSongList);
+            WindowBlockList windowBlockList = new WindowBlockList();
+            windowBlockList.Owner = this;
             windowBlockList.ShowDialog();
             FilterAndBindData();
         }

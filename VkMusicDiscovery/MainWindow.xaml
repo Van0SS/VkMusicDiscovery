@@ -56,8 +56,11 @@
                     <RadioButton x:Name="RbtnLangAll"  Checked="RbtnsLang_OnChecked">All</RadioButton>
                 </StackPanel>
             </GroupBox>
-            
-            <Button x:Name="BtnDownloadall" VerticalAlignment="Top" Margin="5,20,5,0" FontSize="16" Click="BtnDownloadall_OnClick">Download all</Button>
+            <Grid Margin="5,10,5,0">
+                <ProgressBar x:Name="ProgressBarDownload" Height="25"></ProgressBar>
+                <TextBlock x:Name="TblProgressBar" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+            </Grid>
+            <Button x:Name="BtnDownloadall" VerticalAlignment="Top" Margin="5,5,5,10" FontSize="16" Click="BtnDownloadall_OnClick">Download all</Button>
             <Button x:Name="BtnEditblocked" Click="BtnEditBlocked_OnClick">Edit blocked content</Button>
         </StackPanel>
 

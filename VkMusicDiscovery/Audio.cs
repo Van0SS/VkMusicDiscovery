@@ -7,6 +7,66 @@ using VkMusicDiscovery.Enums;
 
 namespace VkMusicDiscovery
 {
+    /// <summary>
+    /// Для привязки списка заблокированных авторов через DataGrid в окне WindowBlockList
+    /// </summary>
+    public class ArtistToBind
+    {
+        private string _artist;
+        public string Artist
+        {
+            get { return _artist; }
+            set
+            {
+                if (String.IsNullOrEmpty(value))
+                    _artist = "Va";
+                else
+                {
+                    _artist = StaticFunc.ReplaceDash(value);
+                    _artist = StaticFunc.ToLowerButFirstUp(value);
+                }
+
+            }
+        }
+
+        public ArtistToBind(string artist)
+        {
+            Artist = artist;
+        }
+        public ArtistToBind() //Для возможности добавлять новые сторки через DataGrid
+        { }
+    }
+    /// <summary>
+    /// Для привязки списка заблокированных песен через DataGrid в окне WindowBlockList
+    /// </summary>
+    public class ArtistTitleToBind : ArtistToBind
+    {
+        private string _title;
+
+        public string Title
+        {
+            get { return _title; }
+            set
+            {
+                if (String.IsNullOrEmpty(value))
+                    _title = "Track 1"; //Самый известный трек.
+                else
+                {
+                    _title = StaticFunc.ReplaceDash(value);
+                    _title = StaticFunc.ToLowerButFirstUp(value);
+                }
+            }
+        }
+
+        public ArtistTitleToBind(string artist, string title)
+        {
+            Artist = artist;
+            Title = title;
+        }
+        public ArtistTitleToBind() //Для возможности добавлять новые сторки через DataGrid
+        { }
+    }
+
     public class Audio
     {
         private string _artist;
@@ -25,6 +85,7 @@ namespace VkMusicDiscovery
                     _artist = "VA"; //Хороший исполнитель.
                 else
                 {
+                    _artist = StaticFunc.ReplaceDash(value);
                     _artist = value;
                 }
             }
@@ -38,6 +99,7 @@ namespace VkMusicDiscovery
                     _title = "Track 1"; //Самый известный трек.
                 else
                 {
+                    _title = StaticFunc.ReplaceDash(value);
                     _title = value;
                 }
             }
