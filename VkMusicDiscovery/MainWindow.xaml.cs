@@ -33,7 +33,21 @@ namespace VkMusicDiscovery
         /// </summary>
         public class ArtistToBind
         {
-           public string Artist { get; set; }
+            private string _artist;
+            public string Artist
+            {
+                get { return _artist; }
+                set
+                {
+                    if (String.IsNullOrEmpty(value))
+                        _artist = "VA";
+                    else
+                    {
+                        _artist = value;
+                    }
+
+                }
+            }
 
             public ArtistToBind(string artist)
             {
@@ -59,11 +73,11 @@ namespace VkMusicDiscovery
             { }
         }
 
-        private VkApi _vkApi;
+        private readonly VkApi _vkApi;
         private List<Audio> _audiosRecomendedList;
-        private List<Audio> _fileteredRecomendedList = new List<Audio>();
-        private List<ArtistToBind> _blockedArtistList = new List<ArtistToBind>();
-        private List<ArtistTitleToBind> _blockedSongList = new List<ArtistTitleToBind>();
+        private readonly List<Audio> _fileteredRecomendedList = new List<Audio>();
+        private readonly List<ArtistToBind> _blockedArtistList = new List<ArtistToBind>();
+        private readonly List<ArtistTitleToBind> _blockedSongList = new List<ArtistTitleToBind>();
         public MainWindow()
         {
             InitializeComponent();
@@ -84,7 +98,7 @@ namespace VkMusicDiscovery
             bool random = CbxRandom.IsChecked.Value;
             int offset = Convert.ToInt32(TxbOffset.Text);
             _audiosRecomendedList = _vkApi.AudioGetRecommendations(count, random, offset);
-            FilterByLangAndBindData();
+            FilterAndBindData();
         }
 
         private void BtnDownloadall_OnClick(object sender, RoutedEventArgs e)
@@ -111,37 +125,56 @@ namespace VkMusicDiscovery
 
         private void RbtnsLang_OnChecked(object sender, RoutedEventArgs e)
         {
-            FilterByLangAndBindData();
+            FilterAndBindData();
         }
 
-        private void FilterByLangAndBindData()
+        private void FilterAndBindData()
         {
             _fileteredRecomendedList.Clear();
-            if (RbtnLangRu.IsChecked == true)
+            foreach (var track in _audiosRecomendedList)
             {
-                foreach (var track in _audiosRecomendedList)
-                {
-                    if (Regex.IsMatch((track.Artist + track.Title), "[А-Яа-я]"))
-                        _fileteredRecomendedList.Add(track);
-                }
+                if (FailCurLang(track))
+                    continue;
+
+                if (IsContentInBlockArtists(track))
+                    continue;
+
+                if (IsContentInBlockSongs(track))
+                    continue;
+
+                _fileteredRecomendedList.Add(track);
             }
-            else if (RbtnLangEng.IsChecked == true)
-            {
-                foreach (var track in _audiosRecomendedList)
-                {
-                    if (!Regex.IsMatch((track.Artist + track.Title), "[А-Яа-я]"))
-                        _fileteredRecomendedList.Add(track);
-                }
-            }
-            else
-            {
-                _fileteredRecomendedList.AddRange(_audiosRecomendedList);
-            }
-            BlockArtists();
-            BlockSongs();
             DataGridAudio.Items.Refresh();
         }
 
+        private bool FailCurLang(Audio track)
+        {
+            if (RbtnLangRu.IsChecked == true)
+            {
+                if (!Regex.IsMatch((track.Artist + track.Title), "[А-Яа-я]"))
+                    return true;
+            }
+            if (RbtnLangEng.IsChecked == true)
+            {
+                if (Regex.IsMatch((track.Artist + track.Title), "[А-Яа-я]"))
+                    return true;
+            }
+            return false;
+
+        }
+
+        private bool IsContentInBlockArtists(Audio track)
+        {
+            var curArtist = StaticFunc.ToLowerButFirstUp(track.Artist);
+            return (_blockedArtistList.Any(a => a.Artist == curArtist));
+        }
+
+        private bool IsContentInBlockSongs(Audio track)
+        {
+            var blockSong = new ArtistTitleToBind(track.Artist, track.Title);
+            return (_blockedSongList.Any(a => (a.Artist == blockSong.Artist) &&
+                                              (a.Title == blockSong.Title)));
+        }
         /// <summary>
         /// Добавление АРТИСТА в лист блокировки.
         /// </summary>
@@ -152,26 +185,12 @@ namespace VkMusicDiscovery
             foreach (var item in DataGridAudio.SelectedItems)
             {
                 var blockArtist = ((Audio) item).Artist;
+                blockArtist = StaticFunc.ToLowerButFirstUp(blockArtist);
                 if (_blockedArtistList.All(a => a.Artist != blockArtist))
                     _blockedArtistList.Add(new ArtistToBind(blockArtist));
             }
-            BlockArtists();
+            FilterAndBindData();
             DataGridAudio.Items.Refresh();
-        }
-
-        /// <summary>
-        /// Блокирование АРТИСТА по списку.
-        /// </summary>
-        private void BlockArtists()
-        {
-            for (int i = _fileteredRecomendedList.Count -1; i >= 0; i--)
-            {
-                var curArtist = StaticFunc.ToLowerButFirstUp(_fileteredRecomendedList[i].Artist);
-                if (_blockedArtistList.Any(a => a.Artist == curArtist))
-                {
-                    _fileteredRecomendedList.RemoveAt(i);
-                }
-            }
         }
 
         /// <summary>
@@ -184,6 +203,8 @@ namespace VkMusicDiscovery
             foreach (var item in DataGridAudio.SelectedItems)
             {
                 var blockSong = (Audio) item;
+                blockSong.Artist = StaticFunc.ToLowerButFirstUp(blockSong.Artist);
+                blockSong.Title = StaticFunc.ToLowerButFirstUp(blockSong.Title);
                 if (_blockedSongList.All(a => ((a.Artist != blockSong.Artist) ||
                                               (a.Title != blockSong.Title))
                     ))
@@ -191,25 +212,10 @@ namespace VkMusicDiscovery
                     _blockedSongList.Add(new ArtistTitleToBind(blockSong.Artist, blockSong.Title));
                 }
             }
-            BlockSongs();
+            FilterAndBindData();
             DataGridAudio.Items.Refresh();
         }
 
-        /// <summary>
-        /// Блокирование ПЕСНИ по списку.
-        /// </summary>
-        private void BlockSongs()
-        {
-            for (int i = _fileteredRecomendedList.Count - 1; i >= 0; i--)
-            {
-                var blockSong = new ArtistTitleToBind(_fileteredRecomendedList[i].Artist, _fileteredRecomendedList[i].Title);
-                if (_blockedSongList.Any(a => (a.Artist == blockSong.Artist) &&
-                    (a.Title == blockSong.Title)))
-                {
-                    _fileteredRecomendedList.RemoveAt(i);
-                }
-            }
-        }
         /// <summary>
         /// Проверка ввода для полей с числами.
         /// </summary>
@@ -228,7 +234,7 @@ namespace VkMusicDiscovery
         {
             WindowBlockList windowBlockList = new WindowBlockList(_blockedArtistList, _blockedSongList);
             windowBlockList.ShowDialog();
-           // DataGridAudio.Items.Refresh();
+            FilterAndBindData();
         }
     }
 }
