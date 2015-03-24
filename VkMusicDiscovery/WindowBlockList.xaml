@@ -36,6 +36,7 @@
 
         <StackPanel Grid.Column="1">
             <Button x:Name="BtnClear"  Margin="5, 25, 5, 5" Click="BtnClear_OnClick">Clear</Button>
+            <Button x:Name="BtnAdd" Margin="5" Click="BtnAdd_OnClick">Add</Button>
             <Button x:Name="BtnImport" Margin="5" Click="BtnImport_OnClick">Import</Button>
             <Button x:Name="BtnExport" Margin="5" Click="BtnExport_OnClick">Export</Button>
 

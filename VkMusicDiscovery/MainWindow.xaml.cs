@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -39,7 +40,7 @@ namespace VkMusicDiscovery
         private delegate void UpdateProgressBarDelegate(DependencyProperty dp, object value);
 
         private string _directoryToDownload;
-        
+
         public MainWindow()
         {
             InitializeComponent();
@@ -63,7 +64,17 @@ namespace VkMusicDiscovery
         {
             BtnDownloadall.Content = "Download All";
             ProgressBarDownload.Value = 0;
-            TblProgressBar.Text = "Completed";
+            if (e.Cancelled)
+            {
+                TblProgressBar.Text = "Canceled";
+            }
+            else
+            {
+                TblProgressBar.Text = "Completed";
+            }
+            
+
+            //Сделать чтобы через 3 сек снова писалось кол-во.
         }
 
         private void worker_DoWork(object sender, DoWorkEventArgs e)
@@ -149,7 +160,7 @@ namespace VkMusicDiscovery
                 _fileteredRecomendedList.Add(track);
             }
             DataGridAudio.Items.Refresh();
-            TblProgressBar.Text = "Count: " + _fileteredRecomendedList.Count.ToString();
+            TblProgressBar.Text = "Count: " + _fileteredRecomendedList.Count;
         }
 
         private bool FailCurLang(Audio track)
