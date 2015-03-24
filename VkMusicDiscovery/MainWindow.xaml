@@ -58,7 +58,7 @@
             </GroupBox>
             <Grid Margin="5,10,5,0">
                 <ProgressBar x:Name="ProgressBarDownload" Height="25"></ProgressBar>
-                <TextBlock x:Name="TblProgressBar" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                <TextBlock x:Name="TblProgressBar" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Grid>
             <Button x:Name="BtnDownloadall" VerticalAlignment="Top" Margin="5,5,5,10" FontSize="16" Click="BtnDownloadall_OnClick">Download all</Button>
             <Button x:Name="BtnEditblocked" Click="BtnEditBlocked_OnClick">Edit blocked content</Button>

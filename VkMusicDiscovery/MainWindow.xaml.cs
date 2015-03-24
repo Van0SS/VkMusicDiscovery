@@ -39,6 +39,8 @@ namespace VkMusicDiscovery
 
         private delegate void UpdateProgressBarDelegate(DependencyProperty dp, object value);
 
+        private delegate void ChangeTextDelegate(DependencyProperty dp, object value);
+
         private string _directoryToDownload;
 
         public MainWindow()
@@ -52,12 +54,14 @@ namespace VkMusicDiscovery
             _fileteredRecomendedList.AddRange(_audiosRecomendedList);
             DataGridAudio.ItemsSource = _fileteredRecomendedList;
 
-            RbtnLangAll.IsChecked = true;
+            
 
             worker = new BackgroundWorker();
             worker.WorkerSupportsCancellation = true;
-            worker.DoWork += new DoWorkEventHandler(worker_DoWork);
-            worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(worker_RunWorkerCompleted);
+            worker.DoWork += worker_DoWork;
+            worker.RunWorkerCompleted += worker_RunWorkerCompleted;
+
+            RbtnLangAll.IsChecked = true;
         }
 
         private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -117,9 +121,11 @@ namespace VkMusicDiscovery
 
         private void DownloadFiles()
         {
-            UpdateProgressBarDelegate updateProgress = new UpdateProgressBarDelegate(ProgressBarDownload.SetValue);
+            UpdateProgressBarDelegate updateProgress = ProgressBarDownload.SetValue;
+            ChangeTextDelegate changeText = TblProgressBar.SetValue;
             double value = 0;
-            foreach (var track in _fileteredRecomendedList)
+            var filesToDownloadList = new List<Audio>(_fileteredRecomendedList);
+            foreach (var track in filesToDownloadList)
             {
                 if (worker.CancellationPending)
                 {
@@ -134,7 +140,8 @@ namespace VkMusicDiscovery
                     fileName = fileName.Substring(0, 250);
 
                 new WebClient().DownloadFile(track.Url, _directoryToDownload + '\\' + fileName);
-                Dispatcher.Invoke(updateProgress, new object[] {ProgressBar.ValueProperty, ++value});
+                Dispatcher.Invoke(updateProgress, ProgressBar.ValueProperty, ++value);
+                Dispatcher.Invoke(changeText, TextBlock.TextProperty, value + "/" + filesToDownloadList.Count);
             }
         }
 
@@ -160,7 +167,8 @@ namespace VkMusicDiscovery
                 _fileteredRecomendedList.Add(track);
             }
             DataGridAudio.Items.Refresh();
-            TblProgressBar.Text = "Count: " + _fileteredRecomendedList.Count;
+            if (!worker.IsBusy)
+                TblProgressBar.Text = "Count: " + _fileteredRecomendedList.Count;
         }
 
         private bool FailCurLang(Audio track)
