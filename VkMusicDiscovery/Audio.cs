@@ -22,8 +22,8 @@ namespace VkMusicDiscovery
                     _artist = "Va";
                 else
                 {
-                    _artist = StaticFunc.ReplaceDash(value);
-                    _artist = StaticFunc.ToLowerButFirstUp(value);
+                    _artist = Utils.ReplaceDash(value);
+                    _artist = Utils.ToLowerButFirstUp(value);
                 }
 
             }
@@ -52,8 +52,8 @@ namespace VkMusicDiscovery
                     _title = "Track 1"; //Самый известный трек.
                 else
                 {
-                    _title = StaticFunc.ReplaceDash(value);
-                    _title = StaticFunc.ToLowerButFirstUp(value);
+                    _title = Utils.ReplaceDash(value);
+                    _title = Utils.ToLowerButFirstUp(value);
                 }
             }
         }
@@ -85,7 +85,7 @@ namespace VkMusicDiscovery
                     _artist = "VA"; //Хороший исполнитель.
                 else
                 {
-                    _artist = StaticFunc.ReplaceDash(value);
+                    _artist = Utils.ReplaceDash(value);
                     _artist = value;
                 }
             }
@@ -99,7 +99,7 @@ namespace VkMusicDiscovery
                     _title = "Track 1"; //Самый известный трек.
                 else
                 {
-                    _title = StaticFunc.ReplaceDash(value);
+                    _title = Utils.ReplaceDash(value);
                     _title = value;
                 }
             }
@@ -113,7 +113,7 @@ namespace VkMusicDiscovery
         /// <summary>
         /// Идентификатор альбома, в котором находится аудиозапись (если присвоен).
         /// </summary>
-        public AudioGenres? GenreId { get; set; }
+        public AudioGenre? GenreId { get; set; }
 
     }
 }

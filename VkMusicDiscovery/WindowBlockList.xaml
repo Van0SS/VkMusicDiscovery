@@ -8,7 +8,7 @@
             <ColumnDefinition/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        <TabControl x:Name="TabControlLists">
+        <TabControl x:Name="TabControlLists" SelectionChanged="TabControlLists_SelectionChanged">
             <TabItem Header="Artists">
                 <DataGrid x:Name="DataGridArtists" CanUserReorderColumns="False" AutoGenerateColumns="False">
                     <DataGrid.Columns>
@@ -36,10 +36,11 @@
 
         <StackPanel Grid.Column="1">
             <Button x:Name="BtnClear"  Margin="5, 25, 5, 5" Click="BtnClear_OnClick">Clear</Button>
+            <Button x:Name="BtnNew" Margin="5" Click="BtnNew_OnClick">New</Button>
             <Button x:Name="BtnAdd" Margin="5" Click="BtnAdd_OnClick">Add</Button>
-            <Button x:Name="BtnImport" Margin="5" Click="BtnImport_OnClick">Import</Button>
-            <Button x:Name="BtnExport" Margin="5" Click="BtnExport_OnClick">Export</Button>
-
+            <Button x:Name="BtnOpen" Margin="5" Click="BtnOpen_OnClick">Open</Button>
+            <Button x:Name="BtnSave" Margin="5" Click="BtnSave_OnClick">Save</Button>
+            <Button x:Name="BtnSaveAs" Margin="5" Click="BtnSaveAs_OnClick">Save as</Button>
         </StackPanel>
     </Grid>
 </Window>

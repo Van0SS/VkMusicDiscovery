@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -25,17 +26,30 @@ using VkMusicDiscovery.Enums;
 
 namespace VkMusicDiscovery
 {
+
+    public class ViewModel
+    {
+        public CollectionViewSource ViewSource { get; set; }
+        public ObservableCollection<Audio> Collection { get; set; }
+        public ViewModel()
+        {
+            this.Collection = new ObservableCollection<Audio>();
+            this.ViewSource = new CollectionViewSource();
+            ViewSource.Source = this.Collection;
+        }
+    }
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
+
         private readonly VkApi _vkApi;
         private List<Audio> _audiosRecomendedList;
         private readonly List<Audio> _fileteredRecomendedList = new List<Audio>();
         public readonly List<ArtistToBind> BlockedArtistList = new List<ArtistToBind>();
         public readonly List<ArtistTitleToBind> BlockedSongList = new List<ArtistTitleToBind>();
-        private BackgroundWorker worker;
+        private readonly BackgroundWorker _workerDownload;
 
         private delegate void UpdateProgressBarDelegate(DependencyProperty dp, object value);
 
@@ -54,14 +68,87 @@ namespace VkMusicDiscovery
             _fileteredRecomendedList.AddRange(_audiosRecomendedList);
             DataGridAudio.ItemsSource = _fileteredRecomendedList;
 
-            
-
-            worker = new BackgroundWorker();
-            worker.WorkerSupportsCancellation = true;
-            worker.DoWork += worker_DoWork;
-            worker.RunWorkerCompleted += worker_RunWorkerCompleted;
+            _workerDownload = new BackgroundWorker();
+            _workerDownload.WorkerSupportsCancellation = true;
+            _workerDownload.DoWork += worker_DoWork;
+            _workerDownload.RunWorkerCompleted += worker_RunWorkerCompleted;
 
             RbtnLangAll.IsChecked = true;
+
+            if (!File.Exists(Utils.PathBlockArtists))
+                Utils.PathBlockArtists = "New";
+            else
+            {
+                ParseFile(Utils.PathBlockArtists, BlockTabType.Artists);
+            }
+            if (!File.Exists(Utils.PathBlockSongs))
+                Utils.PathBlockSongs = "New";
+            else
+            {
+                ParseFile(Utils.PathBlockSongs, BlockTabType.Songs);
+            }
+
+            FilterAndBindData();
+        }
+
+        /// <summary>
+        /// Добавить элементы из файлы в лист блокировки.
+        /// </summary>
+        /// <param name="fileName">Путь</param>
+        /// <param name="tabType">Тип листа</param>
+        public void ParseFile(string fileName, BlockTabType tabType)
+        {
+#if !DEBUG
+            try
+            {
+#endif
+                using (var fileReader = new StreamReader(fileName))
+                {
+                    string line;
+                    while ((line = fileReader.ReadLine()) != null)
+                    {
+                        if (tabType == BlockTabType.Artists)
+                        {
+                            BlockedArtistList.Add(new ArtistToBind(line));
+                        }
+                        else
+                        {
+                            var indexOfSep = line.IndexOf(" - ");
+                            var artist = line.Substring(0, indexOfSep);
+                            var title = line.Substring(indexOfSep + 3);
+                            BlockedSongList.Add(new ArtistTitleToBind(artist, title));
+                        }
+                    }
+                }
+#if !DEBUG
+            }
+            catch (Exception)
+            {
+                throw new Exception("fileName");
+            }
+
+#endif
+        }
+
+        public void WriteFile(string fileFullName, BlockTabType tabType)
+        {
+            using (StreamWriter fileWriter = new StreamWriter(fileFullName))
+            {
+                if (tabType == BlockTabType.Artists)
+                {
+                    foreach (var artist in BlockedArtistList)
+                    {
+                        fileWriter.WriteLine(artist.Artist);
+                    }
+                }
+                else
+                {
+                    foreach (var artist in BlockedSongList)
+                    {
+                        fileWriter.WriteLine(artist.Artist + " - " + artist.Title);
+                    }
+                }
+            }
         }
 
         private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -84,7 +171,7 @@ namespace VkMusicDiscovery
         private void worker_DoWork(object sender, DoWorkEventArgs e)
         {
             DownloadFiles();
-            if (worker.CancellationPending)
+            if (_workerDownload.CancellationPending)
             {
                 e.Cancel = true;
             }
@@ -103,7 +190,7 @@ namespace VkMusicDiscovery
         {
             if (BtnDownloadall.Content == "Cancel")
             {
-                worker.CancelAsync();
+                _workerDownload.CancelAsync();
 
                 return;
             }
@@ -115,7 +202,7 @@ namespace VkMusicDiscovery
                 ProgressBarDownload.Maximum = _fileteredRecomendedList.Count;
                 ProgressBarDownload.Value = 0;
                 BtnDownloadall.Content = "Cancel";
-                worker.RunWorkerAsync();
+                _workerDownload.RunWorkerAsync();
             }
         }
 
@@ -127,7 +214,7 @@ namespace VkMusicDiscovery
             var filesToDownloadList = new List<Audio>(_fileteredRecomendedList);
             foreach (var track in filesToDownloadList)
             {
-                if (worker.CancellationPending)
+                if (_workerDownload.CancellationPending)
                 {
                     return;
                 }
@@ -150,6 +237,9 @@ namespace VkMusicDiscovery
             FilterAndBindData();
         }
 
+        /// <summary>
+        /// Фильтрация текущего списка по языку и списку блокировки.
+        /// </summary>
         private void FilterAndBindData()
         {
             _fileteredRecomendedList.Clear();
@@ -167,7 +257,7 @@ namespace VkMusicDiscovery
                 _fileteredRecomendedList.Add(track);
             }
             DataGridAudio.Items.Refresh();
-            if (!worker.IsBusy)
+            if (!_workerDownload.IsBusy) // Показывать количество, только если ничего не скачивается.
                 TblProgressBar.Text = "Count: " + _fileteredRecomendedList.Count;
         }
 
@@ -189,7 +279,7 @@ namespace VkMusicDiscovery
 
         private bool IsContentInBlockArtists(Audio track)
         {
-            var curArtist = StaticFunc.ToLowerButFirstUp(track.Artist);
+            var curArtist = Utils.ToLowerButFirstUp(track.Artist);
             return (BlockedArtistList.Any(a => a.Artist == curArtist));
         }
 
@@ -209,7 +299,7 @@ namespace VkMusicDiscovery
             foreach (var item in DataGridAudio.SelectedItems)
             {
                 var blockArtist = ((Audio) item).Artist;
-                blockArtist = StaticFunc.ToLowerButFirstUp(blockArtist);
+                blockArtist = Utils.ToLowerButFirstUp(blockArtist);
                 if (BlockedArtistList.All(a => a.Artist != blockArtist))
                     BlockedArtistList.Add(new ArtistToBind(blockArtist));
             }
@@ -227,8 +317,8 @@ namespace VkMusicDiscovery
             foreach (var item in DataGridAudio.SelectedItems)
             {
                 var blockSong = (Audio) item;
-                blockSong.Artist = StaticFunc.ToLowerButFirstUp(blockSong.Artist);
-                blockSong.Title = StaticFunc.ToLowerButFirstUp(blockSong.Title);
+                blockSong.Artist = Utils.ToLowerButFirstUp(blockSong.Artist);
+                blockSong.Title = Utils.ToLowerButFirstUp(blockSong.Title);
                 if (BlockedSongList.All(a => ((a.Artist != blockSong.Artist) ||
                                               (a.Title != blockSong.Title))
                     ))
@@ -258,8 +348,36 @@ namespace VkMusicDiscovery
         {
             WindowBlockList windowBlockList = new WindowBlockList();
             windowBlockList.Owner = this;
-            windowBlockList.ShowDialog();
+#if !DEBUG
+            try
+            {
+#endif
+                windowBlockList.ShowDialog();
+#if !DEBUG
+            }
+            catch (Exception exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
+#endif
             FilterAndBindData();
+        }
+
+        private void MainWindow_OnClosing(object sender, CancelEventArgs e)
+        {
+            if (Utils.PathBlockArtists == "New")
+                Utils.PathBlockArtists = Directory.GetCurrentDirectory() + "\\DefArtists.avk";
+
+            WriteFile(Utils.PathBlockArtists, BlockTabType.Artists); //Пока срёт, где нахдится.
+                
+            
+            if (Utils.PathBlockSongs == "New")
+                Utils.PathBlockSongs = Directory.GetCurrentDirectory() + "\\DefSongs.avk";
+
+            WriteFile(Utils.PathBlockSongs, BlockTabType.Songs); //Пока срёт, где нахдится.
+                
+            
+            Properties.Settings.Default.Save();
         }
     }
 }

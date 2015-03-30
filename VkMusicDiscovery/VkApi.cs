@@ -81,11 +81,12 @@ namespace VkMusicDiscovery
                     curAudio.LyricsId = Convert.ToUInt32(lyricsIdNode.InnerText);
                 var genreIdNode = audioNode.SelectSingleNode("genre_id");
                 if (genreIdNode != null) //Жанр тоже.
-                    curAudio.GenreId = (AudioGenres) Convert.ToUInt32(genreIdNode.InnerText);
+                    curAudio.GenreId = (AudioGenre) Convert.ToUInt32(genreIdNode.InnerText);
 
                 audioList.Add(curAudio);
             }
-            return audioList;
+
+            return audioList.OrderBy(x => x.Artist).ThenBy(x => x.Title).ToList();
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -17,6 +18,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using VkMusicDiscovery.Enums;
 
 namespace VkMusicDiscovery
 {
@@ -26,18 +28,29 @@ namespace VkMusicDiscovery
     public partial class WindowBlockList : Window
     {
         private MainWindow _mainWindow;
+        private const string TitleString = "Block list";
 
+        private BlockTabType _curTabType = BlockTabType.Artists;
         public WindowBlockList()
         {
             InitializeComponent();
         }
+
+        private void SetTitle()
+        {
+            Title = (_curTabType == BlockTabType.Artists ? Utils.PathBlockArtists : Utils.PathBlockSongs)
+                + " - " + TitleString;
+
+        }
+
         private void Window_Activated(object sender, EventArgs e)
         {
             _mainWindow = Owner as MainWindow;
             DataGridArtists.ItemsSource = _mainWindow.BlockedArtistList;
             DataGridSongs.ItemsSource = _mainWindow.BlockedSongList;
-        }
 
+            SetTitle();
+        }
 
         private void BtnClear_OnClick(object sender, RoutedEventArgs e)
         {
@@ -46,7 +59,7 @@ namespace VkMusicDiscovery
 
         private void ClearCurList()
         {
-            if (TabControlLists.SelectedIndex == 0)
+            if (_curTabType == BlockTabType.Artists)
             {
                 _mainWindow.BlockedArtistList.Clear();
                 DataGridArtists.Items.Refresh();
@@ -63,92 +76,120 @@ namespace VkMusicDiscovery
         /// </summary>
         private void BtnAdd_OnClick(object sender, RoutedEventArgs e)
         {
-            ParseFiles();
+            var files = ShowOpenFileDialog(false, _curTabType);
+            if (files == null) return;
+            ParseFiles(files, _curTabType);
+            RefreshList(_curTabType);
         }
 
         /// <summary>
         /// Замещение текущего листа.
         /// </summary>
-        private void BtnImport_OnClick(object sender, RoutedEventArgs e)
+        private void BtnOpen_OnClick(object sender, RoutedEventArgs e)
         {
-            ClearCurList();
-            ParseFiles();
+            var file = ShowOpenFileDialog(false, _curTabType);
+            if (file == null) return;
+            OpenFile(file[0], _curTabType);
+            RefreshList(_curTabType);
         }
 
-        /// <summary>
-        /// Считывание файлов и запись в текущий лист. utf-8
-        /// </summary>
-        private void ParseFiles()
+        ///
+        private string[] ShowOpenFileDialog(bool multiselect, BlockTabType tabType)
         {
             var loadDialog = new OpenFileDialog();
-            loadDialog.Multiselect = true;
-            bool isArtists = (TabControlLists.SelectedIndex == 0);
+            loadDialog.Multiselect = multiselect;
             var txtAllFilter = "|Text files (*.txt)|*.txt|All files (*.*)|*.*";
             var avkFilter = "Artists files (*.avk)|*.avk" + txtAllFilter;
             var svkFilter = "Songs files (*.svk)|*.svk" + txtAllFilter;
 
-            loadDialog.Filter = isArtists ? avkFilter : svkFilter;
-            if (loadDialog.ShowDialog() != true) return;
-            var wrongsFiles = "";
-            foreach (var fileName in loadDialog.FileNames)
+            loadDialog.Filter = _curTabType == BlockTabType.Artists ? avkFilter : svkFilter;
+            if (loadDialog.ShowDialog() != true) return null;
+            return loadDialog.FileNames;
+
+        }
+
+        private void OpenFile(string fileName, BlockTabType tabType)
+        {
+            try
             {
-                
-                try
-                {
-                    using (var fileReader = new StreamReader(fileName))
-                    {
-                        string line;
-                        while ((line = fileReader.ReadLine()) != null)
-                        {
-                            if (isArtists)
-                            {
-                                _mainWindow.BlockedArtistList.Add(new ArtistToBind(line));
-                            }
-                            else
-                            {
-                                var indexOfSep = line.IndexOf(" - ");
-                                var artist = line.Substring(0, indexOfSep);
-                                var title = line.Substring(indexOfSep + 3);
-                                _mainWindow.BlockedSongList.Add(new ArtistTitleToBind(artist, title));
-                            }
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-                    wrongsFiles += "\n" + fileName;
-                }
+                ClearCurList();
+                _mainWindow.ParseFile(fileName, tabType);
+                if (tabType == BlockTabType.Artists)
+                    Utils.PathBlockArtists = fileName;
+                else
+                    Utils.PathBlockSongs = fileName;
+                SetTitle();
             }
-            if (wrongsFiles != "")
+            catch (Exception fileException)
             {
-                MessageBox.Show("Next files can't open:" + wrongsFiles);
+                MessageBox.Show("Can't open file: " + fileException);
+                throw;
             }
-            if (isArtists)
+        }
+
+        private void RefreshList(BlockTabType tabType)
+        {
+            if (tabType == BlockTabType.Artists)
                 DataGridArtists.Items.Refresh();
             else
                 DataGridSongs.Items.Refresh();
         }
 
+        private void ParseFiles(string[] fileNames, BlockTabType tabType)
+        {
+            var wrongsFiles = "";
+            foreach (var fileName in fileNames)
+            {
+
+#if !DEBUG
+                try
+                {
+#endif
+                _mainWindow.ParseFile(fileName, tabType);
+#if !DEBUG
+                }
+                catch (Exception file)
+                {
+                    wrongsFiles += "\n" + file.Message;
+                }
+#endif
+            }
+            if (wrongsFiles != "")
+            {
+                MessageBox.Show("Next files can't open:" + wrongsFiles);
+            }
+        }
+
         /// <summary>
         /// Экспорт в файл. utf-8
         /// </summary>
-        private void BtnExport_OnClick(object sender, RoutedEventArgs e)
+        private void BtnSave_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_curTabType == BlockTabType.Artists)
+            {
+                if (Utils.PathBlockArtists == "New")
+                    SaveFile();
+                _mainWindow.WriteFile(Utils.PathBlockArtists, BlockTabType.Artists);   
+            }
+            else
+            {
+                if (Utils.PathBlockSongs == "New")
+                    SaveFile();
+                _mainWindow.WriteFile(Utils.PathBlockSongs, BlockTabType.Songs);                
+            }
+        }
+
+        private void SaveFile()
         {
             var saveDialog = new CommonSaveFileDialog();
-            if (TabControlLists.SelectedIndex == 0)
+            if (_curTabType == BlockTabType.Artists)
             {
                 saveDialog.DefaultExtension = "avk";
                 saveDialog.DefaultFileName = "Artists";
                 if (saveDialog.ShowDialog() == CommonFileDialogResult.Ok)
                 {
-                    var sortedArtists = _mainWindow.BlockedArtistList.OrderBy(x => x.Artist).ToList();
-                    using (StreamWriter fileWriter = new StreamWriter(saveDialog.FileName))
-                    {
-                        foreach (var artist in sortedArtists)
-                        {
-                            fileWriter.WriteLine(artist.Artist);
-                        }
-                    }
+                    _mainWindow.WriteFile(saveDialog.FileName, BlockTabType.Artists);
+                    Utils.PathBlockArtists = saveDialog.FileName;
                 }
             }
             else
@@ -157,18 +198,41 @@ namespace VkMusicDiscovery
                 saveDialog.DefaultFileName = "Songs";
                 if (saveDialog.ShowDialog() == CommonFileDialogResult.Ok)
                 {
-                    var sortedSongs = _mainWindow.BlockedSongList.OrderBy(x => x.Artist).ToList();
-                    using (StreamWriter fileWriter = new StreamWriter(saveDialog.FileName))
-                    {
-                        foreach (var artist in sortedSongs)
-                        {
-                            fileWriter.WriteLine(artist.Artist + " - " + artist.Title);
-                        }
-                    }
+                    _mainWindow.WriteFile(saveDialog.FileName, BlockTabType.Songs);
+                    Utils.PathBlockSongs = saveDialog.FileName;
                 }
             }
+            SetTitle();
+        }
 
+        private void BtnNew_OnClick(object sender, RoutedEventArgs e)
+        {
+            NewFile(_curTabType);
+        }
 
+        private void BtnSaveAs_OnClick(object sender, RoutedEventArgs e)
+        {
+            SaveFile();
+        }
+
+        private void NewFile(BlockTabType tabType)
+        {
+            ClearCurList();
+            if (tabType == BlockTabType.Artists)
+            {
+                Utils.PathBlockArtists = "New";
+            }
+            else
+            {
+                Utils.PathBlockSongs = "New";
+            }
+            SetTitle();
+        }
+
+        private void TabControlLists_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            _curTabType = TabControlLists.SelectedIndex == 0 ? BlockTabType.Artists : BlockTabType.Songs;
+            SetTitle();
         }
     }
 }

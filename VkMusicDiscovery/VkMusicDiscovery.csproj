@@ -61,6 +61,7 @@
     </ApplicationDefinition>
     <Compile Include="Audio.cs" />
     <Compile Include="Enums\AudioGenres.cs" />
+    <Compile Include="Enums\BlockTabs.cs" />
     <Compile Include="Enums\ScopeType.cs" />
     <Compile Include="StaticFunc.cs" />
     <Compile Include="VkApi.cs" />

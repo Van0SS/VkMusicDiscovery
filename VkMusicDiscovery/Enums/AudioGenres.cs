@@ -1,6 +1,6 @@
 ﻿namespace VkMusicDiscovery.Enums
 {
-    public enum AudioGenres
+    public enum AudioGenre
     {
         /// <summary>
         /// Рок музыка.
