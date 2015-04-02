@@ -85,8 +85,9 @@ namespace VkMusicDiscovery
 
                 audioList.Add(curAudio);
             }
-
-            return audioList.OrderBy(x => x.Artist).ThenBy(x => x.Title).ToList();
+            if (!shuffle)
+                return audioList.OrderBy(x => x.Artist).ThenBy(x => x.Title).ToList();
+            return audioList;
         }
 
         /// <summary>

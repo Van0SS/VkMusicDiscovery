@@ -46,5 +46,17 @@ namespace VkMusicDiscovery.Properties {
                 this["PathCurUsedSongs"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.7")]
+        public double Volume {
+            get {
+                return ((double)(this["Volume"]));
+            }
+            set {
+                this["Volume"] = value;
+            }
+        }
     }
 }

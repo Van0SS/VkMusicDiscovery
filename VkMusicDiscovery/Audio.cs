@@ -10,7 +10,7 @@ namespace VkMusicDiscovery
     /// <summary>
     /// Для привязки списка заблокированных авторов через DataGrid в окне WindowBlockList
     /// </summary>
-    public class ArtistToBind
+    public class ArtistToBind : IComparable<ArtistToBind>
     {
         private string _artist;
         public string Artist
@@ -35,6 +35,11 @@ namespace VkMusicDiscovery
         }
         public ArtistToBind() //Для возможности добавлять новые сторки через DataGrid
         { }
+
+        public int CompareTo(ArtistToBind artist)
+        {
+            return String.Compare(this.Artist, artist.Artist, StringComparison.InvariantCultureIgnoreCase);
+        }
     }
     /// <summary>
     /// Для привязки списка заблокированных песен через DataGrid в окне WindowBlockList
@@ -115,5 +120,9 @@ namespace VkMusicDiscovery
         /// </summary>
         public AudioGenre? GenreId { get; set; }
 
+        public string GetArtistDashTitle()
+        {
+            return Artist + " - " + Title;
+        }
     }
 }

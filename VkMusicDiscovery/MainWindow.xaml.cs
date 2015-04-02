@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -19,6 +20,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using System.Xml;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
@@ -47,7 +49,9 @@ namespace VkMusicDiscovery
         private readonly VkApi _vkApi;
         private List<Audio> _audiosRecomendedList;
         private readonly List<Audio> _fileteredRecomendedList = new List<Audio>();
+
         public readonly List<ArtistToBind> BlockedArtistList = new List<ArtistToBind>();
+        
         public readonly List<ArtistTitleToBind> BlockedSongList = new List<ArtistTitleToBind>();
         private readonly BackgroundWorker _workerDownload;
 
@@ -56,6 +60,27 @@ namespace VkMusicDiscovery
         private delegate void ChangeTextDelegate(DependencyProperty dp, object value);
 
         private string _directoryToDownload;
+        private MediaPlayer _mediaPlayer = new MediaPlayer();
+        private MediaState _playerState;
+        private bool _playerRepeatSong = false;
+        private bool _playerShuffle = false;
+        private DispatcherTimer timer;
+        Random rnd = new Random();
+        private MediaState PlayerState
+        {
+            get { return _playerState; }
+            set
+            {
+                _playerState = value;
+                ChangePlayButtonState();
+            }
+        }
+
+        private void ChangePlayButtonState()
+        {
+            BtnPlayerPlayPause.Content = 
+                FindResource(_playerState == MediaState.Play ? "PausePic" : "PlayPic");
+        }
 
         public MainWindow()
         {
@@ -89,6 +114,31 @@ namespace VkMusicDiscovery
             }
 
             FilterAndBindData();
+
+            _mediaPlayer.MediaEnded += MediaPlayerEnded;
+
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(1);
+            timer.Tick += timer_Tick;
+
+            SldVolume.Value = Properties.Settings.Default.Volume;
+        }
+
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            UpdateProgressBarNTime();
+        }
+
+        private void UpdateProgressBarNTime()
+        {
+            ProgressBarPlayer.Value = _mediaPlayer.Position.TotalSeconds;
+            if (!_mediaPlayer.NaturalDuration.HasTimeSpan)
+                return;
+            var elapsedTime = _mediaPlayer.NaturalDuration.TimeSpan - _mediaPlayer.Position;
+            String emptyZero = "";
+            if (elapsedTime.Seconds < 10)
+                emptyZero = "0";
+            TbPlayerTime.Text = "-" + elapsedTime.Minutes + ":" + emptyZero + elapsedTime.Seconds;
         }
 
         /// <summary>
@@ -218,7 +268,7 @@ namespace VkMusicDiscovery
                 {
                     return;
                 }
-                string fileName = track.Artist + " - " + track.Title + ".mp3"; //В вк пока только мр3.
+                string fileName = track.GetArtistDashTitle() + ".mp3"; //В вк пока только мр3.
 
                 if (fileName.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) != -1) //Если есть недопустимые символы, то удалить.
                     fileName = string.Concat(fileName.Split(System.IO.Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
@@ -375,9 +425,154 @@ namespace VkMusicDiscovery
                 Utils.PathBlockSongs = Directory.GetCurrentDirectory() + "\\DefSongs.avk";
 
             WriteFile(Utils.PathBlockSongs, BlockTabType.Songs); //Пока срёт, где нахдится.
-                
-            
+
+            Properties.Settings.Default.Volume = SldVolume.Value;
+
             Properties.Settings.Default.Save();
+        }
+
+        private void BtnPlayerOpen_OnClick(object sender, RoutedEventArgs e)
+        {
+            OpenAndPlaySelected();
+        }
+
+        private void OpenAndPlaySelected()
+        {
+            OpenAndPlayByIndex(DataGridAudio.SelectedIndex);
+            
+        }
+
+        private void OpenAndPlayByIndex(int songIndex)
+        {
+            if (songIndex >= DataGridAudio.Items.Count || songIndex <= -1)
+                songIndex = 0;
+            var song = (Audio) DataGridAudio.Items[songIndex];
+            Uri uri = song.Url;
+            _mediaPlayer.Open(uri);
+            MediaPlayerPlay();
+            TbPlayerSong.Text = song.Artist + " - " + song.Title;
+            TbPlayerSong.ToolTip = TbPlayerSong.Text;
+            ProgressBarPlayer.Maximum = song.Duration;
+            var time = new TimeSpan(0, 0, (int)song.Duration);
+            String emptyZero = "";
+            if (time.Seconds < 10)
+                emptyZero = "0";
+            TbPlayerTime.Text = "-" + time.Minutes + ":" + emptyZero + time.Seconds;
+        }
+
+        private void MediaPlayerPlay()
+        {
+            _mediaPlayer.Play();
+            PlayerState = MediaState.Play;
+            timer.Start();
+        }
+
+        private void MediaPlayerPause()
+        {
+            _mediaPlayer.Pause();
+            PlayerState = MediaState.Pause;
+            timer.Stop();
+        }
+
+        private void MediaPlayerEnded(object sender, EventArgs eventArgs)
+        {
+            if (_playerRepeatSong)
+                _mediaPlayer.Position = new TimeSpan(0);
+            else if (!_playerShuffle)
+            {
+                PlayNextSong();
+            }
+            else
+            {
+                PlayRandomSong();
+            }
+        }
+
+        private void BtnPlayerPlayPause_OnClick(object sender, RoutedEventArgs e)
+        {
+            switch (PlayerState)
+            {
+                case MediaState.Play:
+                    MediaPlayerPause();
+                    break;
+                case MediaState.Pause:
+                    MediaPlayerPlay();
+                    break;
+                default:
+                    OpenAndPlaySelected();
+                    break;
+            }
+        }
+
+        private void BtnPlayerPrev_OnClick(object sender, RoutedEventArgs e)
+        {
+            int curIndex = _fileteredRecomendedList.FindIndex(
+                audio => audio.Url == _mediaPlayer.Source);
+            OpenAndPlayByIndex(--curIndex);
+        }
+
+        private void BtnPlayerNext_OnClick(object sender, RoutedEventArgs e)
+        {
+            PlayNextSong();
+        }
+
+        private void PlayNextSong()
+        {
+            int curIndex = _fileteredRecomendedList.FindIndex(
+                audio => audio.Url == _mediaPlayer.Source);
+            OpenAndPlayByIndex(++curIndex);
+        }
+
+        private void PlayRandomSong()
+        {
+            int rndIndex = rnd.Next(_fileteredRecomendedList.Count);
+            OpenAndPlayByIndex(rndIndex);
+        }
+        private void SldVolume_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            _mediaPlayer.Volume = SldVolume.Value;
+        }
+
+        private void ProgressBarPlayer_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var x = e.GetPosition(ProgressBarPlayer).X;
+            var ratio = x/ProgressBarPlayer.ActualWidth;
+            _mediaPlayer.Position = new TimeSpan(0, 0, (int)(ratio*ProgressBarPlayer.Maximum));
+            UpdateProgressBarNTime();
+        }
+
+        private void MenuItemCopeName_OnClick(object sender, RoutedEventArgs e)
+        {
+            var audio = (Audio) DataGridAudio.SelectedItem;
+            Clipboard.SetText(audio.GetArtistDashTitle());
+        }
+
+        private void BtnPlayerRepeat_OnClick(object sender, RoutedEventArgs e)
+        {
+            _playerRepeatSong = !_playerRepeatSong;
+            Brush brushFill = _playerRepeatSong ? Brushes.Black : null;
+            Brush brushStroke = _playerRepeatSong
+                ? Brushes.WhiteSmoke
+                : (SolidColorBrush)(new BrushConverter().ConvertFrom("#333333"));
+            foreach (Polygon polygon in PanelBtnRepeat.Children)
+            {
+                polygon.Fill = brushFill;
+                polygon.Stroke = brushStroke;
+            }
+        }
+
+        private void BtnPlayerShuffle_OnClick(object sender, RoutedEventArgs e)
+        {
+            _playerShuffle = !_playerShuffle;
+            Brush brushFill = _playerShuffle ? Brushes.Black : null;
+            Brush brushStroke = _playerShuffle
+                ? Brushes.WhiteSmoke
+                : (SolidColorBrush) (new BrushConverter().ConvertFrom("#333333"));
+            foreach (Polygon polygon in GridButtonShuffle.Children)
+            {
+                polygon.Fill = brushFill;
+                polygon.Stroke = brushStroke;
+            }
         }
     }
 }
