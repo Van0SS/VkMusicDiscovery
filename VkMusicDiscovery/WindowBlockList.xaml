@@ -1,0 +1,46 @@
+﻿<Window x:Class="VkMusicDiscovery.WindowBlockList"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:VkMusicDiscovery"
+        Title="Block list" Height="419" Width="450" Activated="Window_Activated">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TabControl x:Name="TabControlLists" SelectionChanged="TabControlLists_SelectionChanged">
+            <TabItem Header="Artists">
+                <DataGrid x:Name="DataGridArtists" CanUserReorderColumns="False" AutoGenerateColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Artist" Width="*">
+                            <DataGridTextColumn.Binding>
+                                <Binding Path="Artist" ValidatesOnDataErrors="True">
+                                    <!--<Binding.ValidationRules>
+                                        <local:TitleArtistValidationRule/>
+                                    </Binding.ValidationRules>-->
+                                </Binding>
+                            </DataGridTextColumn.Binding>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+            <TabItem Header="Songs">
+                <DataGrid x:Name="DataGridSongs" CanUserReorderColumns="False" AutoGenerateColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Artist" Binding="{Binding Artist}"  Width="Auto" MinWidth="100"/>
+                        <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+        </TabControl>
+
+        <StackPanel Grid.Column="1">
+            <Button x:Name="BtnClear"  Margin="5, 25, 5, 5" Click="BtnClear_OnClick">Clear</Button>
+            <Button x:Name="BtnNew" Margin="5" Click="BtnNew_OnClick">New</Button>
+            <Button x:Name="BtnAdd" Margin="5" Click="BtnAdd_OnClick">Add</Button>
+            <Button x:Name="BtnOpen" Margin="5" Click="BtnOpen_OnClick">Open</Button>
+            <Button x:Name="BtnSave" Margin="5" Click="BtnSave_OnClick">Save</Button>
+            <Button x:Name="BtnSaveAs" Margin="5" Click="BtnSaveAs_OnClick">Save as</Button>
+        </StackPanel>
+    </Grid>
+</Window>

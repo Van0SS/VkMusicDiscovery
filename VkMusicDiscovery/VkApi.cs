@@ -32,17 +32,40 @@ namespace VkMusicDiscovery
             var parameters = new NameValueCollection();
             var audioList = new List<Audio>();
 
-            parameters["user_id"] = LoginUserId.ToString();
-            parameters["count"] = count.ToString();
-            parameters["shuffle"] =  Convert.ToInt32(shuffle).ToString();
-            parameters["offset"] = offset.ToString();
+            //Отправляем только отличные от стандартных параметры.
+            if ((userId != LoginUserId) && (userId != null)) //Юзер по дефолту залогиненый.
+                parameters["user_id"] = userId.ToString();
+            if (count != 100) //По дефолту 100 песен.
+                parameters["count"] = count.ToString();
+            if (shuffle == true) //По дефолту нет шафла.
+                parameters["shuffle"] = 1.ToString();
+            if (offset != 0)
+                parameters["offset"] = offset.ToString();
             XmlDocument recomendAudiosXml = ExecuteCommand("audio.getRecommendations", parameters);
-            recomendAudiosXml.Save("aaaa.xml");
+            
+            //Извечение данных из структуры вида:
+            //<response>
+            //  <count>400</count>
+            //  <items list="true">
+            //      <audio>
+            //      </audio>
+            //      <audio>
             XmlNode reNode = recomendAudiosXml.SelectSingleNode("response");
+            if (reNode == null)
+            {
+                var errNode = recomendAudiosXml.SelectSingleNode("error");
+                if (errNode != null)
+                {
+                    var errorMessage = "Error code: " + errNode.SelectSingleNode("error_code").InnerText
+                                       + "\nError message: " + errNode.SelectSingleNode("error_msg").InnerText;
+                    throw new Exception(errorMessage);
+                }
+                
+            }
             XmlNodeList reNode2 = reNode.ChildNodes;
 
-            foreach (XmlNode audioNode in
-                reNode2.Item(1).SelectNodes("audio"))
+            //  <items list="true"> // По другому не выбирается.
+            foreach (XmlNode audioNode in reNode2.Item(1).SelectNodes("audio"))
             {
                 var curAudio = new Audio();
 
@@ -54,14 +77,16 @@ namespace VkMusicDiscovery
                 curAudio.Url = new Uri(audioNode.SelectSingleNode("url").InnerText);
 
                 var lyricsIdNode = audioNode.SelectSingleNode("lyrics_id");
-                if (lyricsIdNode != null)
+                if (lyricsIdNode != null) //Текст есть не у всех песен.
                     curAudio.LyricsId = Convert.ToUInt32(lyricsIdNode.InnerText);
                 var genreIdNode = audioNode.SelectSingleNode("genre_id");
-                if (genreIdNode != null)
-                    curAudio.GenreId = (AudioGenres) Convert.ToUInt32(genreIdNode.InnerText);
+                if (genreIdNode != null) //Жанр тоже.
+                    curAudio.GenreId = (AudioGenre) Convert.ToUInt32(genreIdNode.InnerText);
 
                 audioList.Add(curAudio);
             }
+            if (!shuffle)
+                return audioList.OrderBy(x => x.Artist).ThenBy(x => x.Title).ToList();
             return audioList;
         }
 
@@ -69,13 +94,13 @@ namespace VkMusicDiscovery
         /// Выполнить команду на сервере ВК
         /// </summary>
         /// <param name="name">Название функции API</param>
-        /// <param name="qs">Параметры</param>
+        /// <param name="parameters">Параметры</param>
         /// <returns></returns>
-        private XmlDocument ExecuteCommand(string name, NameValueCollection qs)
+        private XmlDocument ExecuteCommand(string name, NameValueCollection parameters)
         {
             XmlDocument result = new XmlDocument();
             string request = String.Format("https://api.vk.com/method/{0}.xml?{1}&{2}&access_token={3}", name,
-                String.Join("&", from item in qs.AllKeys select item + "=" + qs[item]), VkApiVersion, AccessToken);
+                String.Join("&", from item in parameters.AllKeys select item + "=" + parameters[item]), VkApiVersion, AccessToken);
             result.Load(request);
 
             return result;
