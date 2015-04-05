@@ -17,7 +17,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using Microsoft.WindowsAPICodePack.Dialogs;
 using VkMusicDiscovery.Enums;
 
 namespace VkMusicDiscovery
@@ -38,7 +37,7 @@ namespace VkMusicDiscovery
 
         private void SetTitle()
         {
-            Title = (_curTabType == BlockTabType.Artists ? Utils.PathBlockArtists : Utils.PathBlockSongs)
+            Title = (_curTabType == BlockTabType.Artists ? Settings.PathCurUsedArtists : Settings.PathCurUsedSongs)
                 + " - " + TitleString;
 
         }
@@ -115,9 +114,9 @@ namespace VkMusicDiscovery
                 ClearCurList();
                 _mainWindow.ParseFile(fileName, tabType);
                 if (tabType == BlockTabType.Artists)
-                    Utils.PathBlockArtists = fileName;
+                    Settings.PathCurUsedArtists = fileName;
                 else
-                    Utils.PathBlockSongs = fileName;
+                    Settings.PathCurUsedSongs = fileName;
                 SetTitle();
             }
             catch (Exception fileException)
@@ -167,39 +166,40 @@ namespace VkMusicDiscovery
         {
             if (_curTabType == BlockTabType.Artists)
             {
-                if (Utils.PathBlockArtists == "New")
+                if (Settings.PathCurUsedArtists == "New")
                     SaveFile();
-                _mainWindow.WriteFile(Utils.PathBlockArtists, BlockTabType.Artists);   
+                _mainWindow.WriteFile(Settings.PathCurUsedArtists, BlockTabType.Artists);   
             }
             else
             {
-                if (Utils.PathBlockSongs == "New")
+                if (Settings.PathCurUsedSongs == "New")
                     SaveFile();
-                _mainWindow.WriteFile(Utils.PathBlockSongs, BlockTabType.Songs);                
+                _mainWindow.WriteFile(Settings.PathCurUsedSongs, BlockTabType.Songs);                
             }
         }
 
         private void SaveFile()
         {
-            var saveDialog = new CommonSaveFileDialog();
+            var saveDialog = new SaveFileDialog();
             if (_curTabType == BlockTabType.Artists)
             {
-                saveDialog.DefaultExtension = "avk";
-                saveDialog.DefaultFileName = "Artists";
-                if (saveDialog.ShowDialog() == CommonFileDialogResult.Ok)
+                saveDialog.AddExtension = true;
+                saveDialog.DefaultExt = ".avk";
+                saveDialog.FileName = "Artists.avk";
+
+                if (saveDialog.ShowDialog() == true)
                 {
                     _mainWindow.WriteFile(saveDialog.FileName, BlockTabType.Artists);
-                    Utils.PathBlockArtists = saveDialog.FileName;
+                    Settings.PathCurUsedArtists = saveDialog.FileName;
                 }
             }
             else
             {
-                saveDialog.DefaultExtension = "svk";
-                saveDialog.DefaultFileName = "Songs";
-                if (saveDialog.ShowDialog() == CommonFileDialogResult.Ok)
+                saveDialog.FileName = "Songs.svk";
+                if (saveDialog.ShowDialog() == true)
                 {
                     _mainWindow.WriteFile(saveDialog.FileName, BlockTabType.Songs);
-                    Utils.PathBlockSongs = saveDialog.FileName;
+                    Settings.PathCurUsedSongs = saveDialog.FileName;
                 }
             }
             SetTitle();
@@ -220,11 +220,11 @@ namespace VkMusicDiscovery
             ClearCurList();
             if (tabType == BlockTabType.Artists)
             {
-                Utils.PathBlockArtists = "New";
+                Settings.PathCurUsedArtists = "New";
             }
             else
             {
-                Utils.PathBlockSongs = "New";
+                Settings.PathCurUsedSongs = "New";
             }
             SetTitle();
         }

@@ -45,7 +45,7 @@ namespace VkMusicDiscovery
     /// </summary>
     public partial class MainWindow : Window
     {
-
+        
         private readonly VkApi _vkApi;
         private List<Audio> _audiosRecomendedList;
         private readonly List<Audio> _fileteredRecomendedList = new List<Audio>();
@@ -100,17 +100,14 @@ namespace VkMusicDiscovery
 
             RbtnLangAll.IsChecked = true;
 
-            if (!File.Exists(Utils.PathBlockArtists))
-                Utils.PathBlockArtists = "New";
-            else
+            Settings.ReadSettings();
+            if (Settings.PathCurUsedArtists != "New")
             {
-                ParseFile(Utils.PathBlockArtists, BlockTabType.Artists);
+                ParseFile(Settings.PathCurUsedArtists, BlockTabType.Artists);
             }
-            if (!File.Exists(Utils.PathBlockSongs))
-                Utils.PathBlockSongs = "New";
-            else
+            if (Settings.PathCurUsedSongs != "New")
             {
-                ParseFile(Utils.PathBlockSongs, BlockTabType.Songs);
+                ParseFile(Settings.PathCurUsedSongs, BlockTabType.Songs);
             }
 
             FilterAndBindData();
@@ -121,7 +118,7 @@ namespace VkMusicDiscovery
             timer.Interval = TimeSpan.FromSeconds(1);
             timer.Tick += timer_Tick;
 
-            SldVolume.Value = Properties.Settings.Default.Volume;
+            SldVolume.Value = Settings.Volume;
         }
 
         private void timer_Tick(object sender, EventArgs e)
@@ -415,20 +412,19 @@ namespace VkMusicDiscovery
 
         private void MainWindow_OnClosing(object sender, CancelEventArgs e)
         {
-            if (Utils.PathBlockArtists == "New")
-                Utils.PathBlockArtists = Directory.GetCurrentDirectory() + "\\DefArtists.avk";
+            if (Settings.PathCurUsedArtists == "New")
+                Settings.PathCurUsedArtists = Directory.GetCurrentDirectory() + "\\DefArtists.avk";
 
-            WriteFile(Utils.PathBlockArtists, BlockTabType.Artists); //Пока срёт, где нахдится.
-                
-            
-            if (Utils.PathBlockSongs == "New")
-                Utils.PathBlockSongs = Directory.GetCurrentDirectory() + "\\DefSongs.avk";
+            WriteFile(Settings.PathCurUsedArtists, BlockTabType.Artists); //Пока срёт, где нахдится.
 
-            WriteFile(Utils.PathBlockSongs, BlockTabType.Songs); //Пока срёт, где нахдится.
 
-            Properties.Settings.Default.Volume = SldVolume.Value;
+            if (Settings.PathCurUsedSongs == "New")
+                Settings.PathCurUsedSongs = Directory.GetCurrentDirectory() + "\\DefSongs.avk";
 
-            Properties.Settings.Default.Save();
+            WriteFile(Settings.PathCurUsedSongs, BlockTabType.Songs); //Пока срёт, где нахдится.
+
+            Settings.Volume = SldVolume.Value;
+            Settings.WriteSettings();
         }
 
         private void BtnPlayerOpen_OnClick(object sender, RoutedEventArgs e)

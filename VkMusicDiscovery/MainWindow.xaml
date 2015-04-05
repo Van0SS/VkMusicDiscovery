@@ -1,7 +1,7 @@
 ﻿<Window x:Class="VkMusicDiscovery.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Vk Music Discovery" Height="800" Width="600" MinWidth="400" MinHeight="350" Closing="MainWindow_OnClosing">
+        Title="Vk Music Discovery v0.2" Height="800" Width="600" MinWidth="400" MinHeight="350" Closing="MainWindow_OnClosing">
     <Window.Resources>
         <Thickness x:Key="ButThickness">5</Thickness>
         <Polygon x:Key="PlayPic" Points="0,0 20,10, 0,20" Stroke="WhiteSmoke" Fill="Black" Margin="1"/>
