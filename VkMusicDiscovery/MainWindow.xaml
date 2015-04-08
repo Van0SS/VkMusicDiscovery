@@ -100,6 +100,7 @@
                     <MenuItem Header="Block _song" Click="MenuItemBlockSong_OnClick"/>
                     <Separator/>
                     <MenuItem Header="Copy name" Click="MenuItemCopeName_OnClick"/>
+                    <MenuItem Header="Download" Click="MenuItem_OnClick"></MenuItem>
                 </ContextMenu>
             </DataGrid.ContextMenu>
         </DataGrid>

@@ -63,6 +63,7 @@
     <Compile Include="Enums\AudioGenres.cs" />
     <Compile Include="Enums\BlockTabs.cs" />
     <Compile Include="Enums\ScopeType.cs" />
+    <Compile Include="MainWindowPlayer.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="VkApi.cs" />

@@ -1,18 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Shapes;
 using VkMusicDiscovery.Enums;
 
 namespace VkMusicDiscovery
@@ -35,21 +24,24 @@ namespace VkMusicDiscovery
             get { return _userId; }
         }
 
-        private int appId = 4533969;
-
-        private int scope = (int)(ScopeType.Audio);
+        //Id приложения в ВК.
+        private const int AppId = 4533969;
+        //Права доступа только к аудио.
+        private const int Scope = (int)(ScopeType.Audio);
         public WindowLogin()
         {
             InitializeComponent();
+            //Пытаемся авторизоваться.
             Autorize();
         }
 
         public void Autorize() //Авторизация клиентских приложений.
         {
-            WebBrowserLogin.Navigate(String.Format("http://api.vk.com/oauth/authorize?client_id={0}&scope={1}&display=popup&response_type=token", appId, scope));
+            WebBrowserLogin.Navigate(String.Format("http://api.vk.com/oauth/authorize?client_id={0}&scope={1}&display=popup&response_type=token", AppId, Scope));
         }
         private void WebBrowserLogin_OnLoadCompleted(object sender, NavigationEventArgs e)
         {
+            //Если url содержит токен, то забираем и выходим.
             if (e.Uri.ToString().IndexOf("access_token") != -1)
             {
                 int expiresIn = 0;
