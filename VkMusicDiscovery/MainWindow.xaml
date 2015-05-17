@@ -1,7 +1,9 @@
 ﻿<Window x:Class="VkMusicDiscovery.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Vk Music Discovery v0.2" Height="800" Width="600" MinWidth="400" MinHeight="350" Closing="MainWindow_OnClosing">
+        Title="Vk Music Discovery v0.2" Height="800" Width="600" MinWidth="400" MinHeight="350"
+        Closing="MainWindow_OnClosing" ShowInTaskbar="False"
+        Icon="VkIcon.ico">
     <Window.Resources>
         <Thickness x:Key="ButThickness">5</Thickness>
         <Polygon x:Key="PlayPic" Points="0,0 20,10, 0,20" Stroke="WhiteSmoke" Fill="Black" Margin="1"/>
@@ -58,11 +60,11 @@
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" x:Name="TbPlayerSong" VerticalAlignment="Center"
                                FontFamily="Segoe Print" TextTrimming="CharacterEllipsis">
-                                Бумажные тигры - жизнь ворам смерть мусорам
+                                Select song and click open icon
                     </TextBlock>
                     <TextBlock x:Name="TbPlayerTime" Grid.Row="0" Grid.Column="1" Margin="0"
                                VerticalAlignment="Center">
-                        -0:11
+                        0:00
                     </TextBlock>
                     <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" x:Name="ProgressBarPlayer" Height="10" MouseLeftButtonDown="ProgressBarPlayer_MouseLeftButtonDown" Foreground="#FF011ED3"></ProgressBar>
                 </Grid>
@@ -116,7 +118,7 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <TextBlock VerticalAlignment="Center">Count:</TextBlock>
                 <TextBox x:Name="TxbCount" VerticalAlignment="Center" Width="28"
-                         PreviewTextInput="TxbCountOffset_OnPreviewTextInput" MaxLength="3">10</TextBox>
+                         PreviewTextInput="TxbCountOffset_OnPreviewTextInput" MaxLength="3">50</TextBox>
                 <CheckBox x:Name="CbxRandom" VerticalAlignment="Center">Randomize</CheckBox>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
@@ -141,7 +143,9 @@
                 <ProgressBar x:Name="ProgressBarDownload" Height="25"></ProgressBar>
                 <TextBlock x:Name="TblProgressBar" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Grid>
-            <Button x:Name="BtnDownloadall" VerticalAlignment="Top" Margin="5,5,5,10" FontSize="16" Click="BtnDownloadall_OnClick">Download all</Button>
+            <Button x:Name="BtnDownloadall" VerticalAlignment="Top" Margin="5,5,5,5" FontSize="16" Click="BtnDownloadall_OnClick">Download all</Button>
+            <CheckBox x:Name="CbxAddToBlock" VerticalAlignment="Top" Margin="5,0">Auto add to block list</CheckBox>
+            <CheckBox x:Name="CbxBestBitrate" VerticalAlignment="Top" Margin="5,0">Find with best bitrate</CheckBox>
             <Button x:Name="BtnEditblocked" Click="BtnEditBlocked_OnClick">Edit blocked content</Button>
         </StackPanel>
 

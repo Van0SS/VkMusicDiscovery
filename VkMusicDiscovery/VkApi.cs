@@ -26,11 +26,37 @@ namespace VkMusicDiscovery
             LoginUserId = userId;
         }
 
+        public List<Audio> AudioSearch(string searchString, int count = 10, bool autoComplete = true,
+            bool lyrics = false, bool performerOnly = false, int sort = 2,bool searchOwn = false,
+            int offset = 0)
+        {
+            var parameters = new NameValueCollection();
+
+            parameters["q"] = searchString;
+            if (count != 30) //По дефолту 30 песен.
+                parameters["count"] = count.ToString();
+            if (autoComplete == true)
+                parameters["auto_complete"] = 1.ToString();
+            if (lyrics == true)
+                parameters["lyrics"] = 1.ToString();
+            if (performerOnly == true)
+                parameters["performer_only"] = 1.ToString();
+            if (sort != 2)
+                parameters["sort"] = sort.ToString();
+            if (searchOwn == true)
+                parameters["search_own"] = 1.ToString();
+            if (offset != 0)
+                parameters["offset"] = offset.ToString();
+
+            XmlDocument audioSearchXml = ExecuteCommand("audio.search", parameters);
+            return parseXmlToAudios(audioSearchXml);
+        }
 
         public List<Audio> AudioGetRecommendations(int count = 100, bool shuffle = false, int offset = 0, int? userId = null,  string targetAudio = "")
         {
+
             var parameters = new NameValueCollection();
-            var audioList = new List<Audio>();
+            List<Audio> audioList;
 
             //Отправляем только отличные от стандартных параметры.
             if ((userId != LoginUserId) && (userId != null)) //Юзер по дефолту залогиненый.
@@ -42,25 +68,34 @@ namespace VkMusicDiscovery
             if (offset != 0)
                 parameters["offset"] = offset.ToString();
             XmlDocument recomendAudiosXml = ExecuteCommand("audio.getRecommendations", parameters);
-            
-            //Извечение данных из структуры вида:
-            //<response>
-            //  <count>400</count>
-            //  <items list="true">
-            //      <audio>
-            //      </audio>
-            //      <audio>
-            XmlNode reNode = recomendAudiosXml.SelectSingleNode("response");
+            audioList = parseXmlToAudios(recomendAudiosXml);
+
+            if (!shuffle)
+                return audioList.OrderBy(x => x.Artist).ThenBy(x => x.Title).ToList();
+            return audioList;
+        }
+
+        //Извечение данных из структуры вида:
+        //<response>
+        //  <count>400</count>
+        //  <items list="true">
+        //      <audio>
+        //      </audio>
+        //      <audio>
+        private List<Audio> parseXmlToAudios(XmlDocument xmlDocument)
+        {
+            var audioList = new List<Audio>();
+            XmlNode reNode = xmlDocument.SelectSingleNode("response");
             if (reNode == null)
             {
-                var errNode = recomendAudiosXml.SelectSingleNode("error");
+                var errNode = xmlDocument.SelectSingleNode("error");
                 if (errNode != null)
                 {
                     var errorMessage = "Error code: " + errNode.SelectSingleNode("error_code").InnerText
                                        + "\nError message: " + errNode.SelectSingleNode("error_msg").InnerText;
                     throw new Exception(errorMessage);
                 }
-                
+
             }
             XmlNodeList reNode2 = reNode.ChildNodes;
 
@@ -81,12 +116,11 @@ namespace VkMusicDiscovery
                     curAudio.LyricsId = Convert.ToUInt32(lyricsIdNode.InnerText);
                 var genreIdNode = audioNode.SelectSingleNode("genre_id");
                 if (genreIdNode != null) //Жанр тоже.
-                    curAudio.GenreId = (AudioGenre) Convert.ToUInt32(genreIdNode.InnerText);
+                    curAudio.GenreId = (AudioGenre)Convert.ToUInt32(genreIdNode.InnerText);
 
                 audioList.Add(curAudio);
             }
-            if (!shuffle)
-                return audioList.OrderBy(x => x.Artist).ThenBy(x => x.Title).ToList();
+
             return audioList;
         }
 

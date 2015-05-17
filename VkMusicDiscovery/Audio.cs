@@ -76,6 +76,7 @@ namespace VkMusicDiscovery
     {
         private string _artist;
         private string _title;
+        private int _kbps;
         public uint Id { get; set; }
         /// <summary>
         /// Идентификатор владельца аудиозаписи.
@@ -109,6 +110,24 @@ namespace VkMusicDiscovery
                 }
             }
         }
+
+        public int Kbps
+        {
+            get { return _kbps; }
+            set
+            {
+                if (value >= 320)
+                    _kbps = 320;
+                else if (value <= 0)
+                {
+                    throw new Exception("Value must be above 0");
+                }
+                else
+                {
+                    _kbps = value;
+                }
+            }
+        }
         public uint Duration { get; set; }
         public Uri Url { get; set; }
         /// <summary>
@@ -119,6 +138,8 @@ namespace VkMusicDiscovery
         /// Идентификатор альбома, в котором находится аудиозапись (если присвоен).
         /// </summary>
         public AudioGenre? GenreId { get; set; }
+
+
 
         public string GetArtistDashTitle()
         {

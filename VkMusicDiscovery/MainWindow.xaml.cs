@@ -25,6 +25,7 @@ using System.Xml;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using VkMusicDiscovery.Enums;
+using Path = System.IO.Path;
 
 namespace VkMusicDiscovery
 {
@@ -32,7 +33,7 @@ namespace VkMusicDiscovery
     {
         #region - Fields - 
 
-        private readonly VkApi _vkApi;
+        private readonly AudioFunctions audioFunctions;
         /// <summary>
         /// Исходный список песен от сервера.
         /// </summary>
@@ -80,11 +81,10 @@ namespace VkMusicDiscovery
                 Close();
                 return;
             }
-            _vkApi = new VkApi(windowLogin.AccessToken, windowLogin.UserId);
+            audioFunctions = new AudioFunctions(windowLogin.AccessToken, windowLogin.UserId);
 
             //После получения доступа задаём запрос на список рекомендуемых песен.
-            _audiosRecomendedList = _vkApi.AudioGetRecommendations(Convert.ToInt32(TxbCount.Text));
-
+            _audiosRecomendedList = audioFunctions.GetRecommendations(Convert.ToInt32(TxbCount.Text));
             //Инициализация воркера
             _workerDownload = new BackgroundWorker();
             _workerDownload.WorkerSupportsCancellation = true; //Для возможности отмены.
@@ -94,14 +94,14 @@ namespace VkMusicDiscovery
             //Считывание настроек.
             Settings.ReadSettings();
             if (Settings.PathCurUsedArtists != "New")
-                ParseFile(Settings.PathCurUsedArtists, BlockTabType.Artists);
+                BlockCollection(Settings.PathCurUsedArtists, BlockTabType.Artists);
             if (Settings.PathCurUsedSongs != "New")
-                ParseFile(Settings.PathCurUsedSongs, BlockTabType.Songs);
+                BlockCollection(Settings.PathCurUsedSongs, BlockTabType.Songs);
             SldVolume.Value = Settings.Volume;
 
             PlayerInitialization();
 
-            RbtnLangAll.IsChecked = true; 
+            RbtnLangAll.IsChecked = true; //Пост установка флага, иначе вызывается событие раньше времени.
             FilterSongs(); //Фильтруем песни.
             DataGridAudio.ItemsSource = _fileteredRecomendedList; //Привязываем готовый список к датагрид.
         }
@@ -114,7 +114,7 @@ namespace VkMusicDiscovery
         /// </summary>
         /// <param name="fileName">Путь</param>
         /// <param name="tabType">Тип листа</param>
-        public void ParseFile(string fileName, BlockTabType tabType)
+        public void BlockCollection(string fileName, BlockTabType tabType)
         {
 #if !DEBUG
             try
@@ -132,11 +132,42 @@ namespace VkMusicDiscovery
                         else
                         {
                             var indexOfSep = line.IndexOf(" - ");
+                            if (indexOfSep == -1)
+                                throw new Exception();
                             var artist = line.Substring(0, indexOfSep);
                             var title = line.Substring(indexOfSep + 3);
                             BlockedSongList.Add(new ArtistTitleToBind(artist, title));
                         }
                     }
+                }
+#if !DEBUG
+            }
+            catch (Exception)
+            {
+                throw new Exception("fileName");
+            }
+#endif
+        }
+
+        public void BlockHeader(string filePath, BlockTabType tabType)
+        {
+#if !DEBUG
+            try
+            {
+#endif
+                var fileName = Path.GetFileNameWithoutExtension(filePath);
+                var indexOfSep = fileName.IndexOf(" - ");
+                if (indexOfSep == -1)
+                    throw new Exception();
+                var artist = fileName.Substring(0, indexOfSep);
+                if (tabType == BlockTabType.Artists)
+                {
+                    BlockedArtistList.Add(new ArtistToBind(artist));
+                }
+                else
+                {
+                    var title = fileName.Substring(indexOfSep + 3);
+                    BlockedSongList.Add(new ArtistTitleToBind(artist, title));
                 }
 #if !DEBUG
             }
@@ -175,51 +206,10 @@ namespace VkMusicDiscovery
 
         #endregion - Public methods -
         //---------------------------------------------------------------------------------------------
-        private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            BtnDownloadall.Content = "Download All";
-            ProgressBarDownload.Value = 0;
-            TblProgressBar.Text = e.Cancelled ? "Canceled" : "Completed";
-        }
-
-        private void worker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            DownloadFiles();
-            if (_workerDownload.CancellationPending)
-            {
-                e.Cancel = true;
-            }
-        }
-
-        private void BtnRefresh_OnClick(object sender, RoutedEventArgs e)
-        {
-            int count = Convert.ToInt32(TxbCount.Text);
-            bool random = CbxRandom.IsChecked.Value;
-            int offset = Convert.ToInt32(TxbOffset.Text);
-            _audiosRecomendedList = _vkApi.AudioGetRecommendations(count, random, offset);
-            FilterSongs();
-        }
-
-        private void BtnDownloadall_OnClick(object sender, RoutedEventArgs e)
-        {
-            if (BtnDownloadall.Content == "Cancel")
-            {
-                _workerDownload.CancelAsync();
-
-                return;
-            }
-            
-            var dirDialog = new CommonOpenFileDialog {IsFolderPicker = true};
-            if (dirDialog.ShowDialog() == CommonFileDialogResult.Ok)
-            {
-                _directoryToDownload = dirDialog.FileName;
-                ProgressBarDownload.Maximum = _fileteredRecomendedList.Count;
-                ProgressBarDownload.Value = 0;
-                BtnDownloadall.Content = "Cancel";
-                _workerDownload.RunWorkerAsync();
-            }
-        }
-
+        #region - Private methods -
+        /// <summary>
+        /// Процесс асинхронной загрузки файлов.
+        /// </summary>
         private void DownloadFiles()
         {
             UpdateProgressBarDelegate updateProgress = ProgressBarDownload.SetValue;
@@ -234,47 +224,30 @@ namespace VkMusicDiscovery
                 }
                 string fileName = track.GetArtistDashTitle() + ".mp3"; //В вк пока только мр3.
 
-                if (fileName.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) != -1) //Если есть недопустимые символы, то удалить.
-                    fileName = string.Concat(fileName.Split(System.IO.Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+                if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) != -1) //Если есть недопустимые символы, то удалить.
+                    fileName = string.Concat(fileName.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
 
                 if (fileName.Length > 250) //Если имя файла длинее 250 символов - обрезать.
                     fileName = fileName.Substring(0, 250);
 
-                new WebClient().DownloadFile(track.Url, _directoryToDownload + '\\' + fileName);
+               // if (CbxBestBitrate.IsChecked == true)
+               //     audioFunctions.ReplaceWithBetterQuality(track);
+
+                WebClient webClient = new WebClient();
+                webClient.DownloadFile(track.Url, _directoryToDownload + '\\' + fileName);
+                if (CbxAddToBlock.IsChecked == true)
+                    BlockHeader(fileName, BlockTabType.Songs);
+
                 Dispatcher.Invoke(updateProgress, ProgressBar.ValueProperty, ++value);
                 Dispatcher.Invoke(changeText, TextBlock.TextProperty, value + "/" + filesToDownloadList.Count);
             }
         }
 
-        private void RbtnsLang_OnChecked(object sender, RoutedEventArgs e)
-        {
-            FilterSongs();
-        }
+
 
         /// <summary>
-        /// Фильтрация текущего списка по языку и списку блокировки.
+        /// Если песня на неверном языке - то true.
         /// </summary>
-        private void FilterSongs()
-        {
-            _fileteredRecomendedList.Clear();
-            foreach (var track in _audiosRecomendedList)
-            {
-                if (FailCurLang(track))
-                    continue;
-
-                if (IsContentInBlockArtists(track))
-                    continue;
-
-                if (IsContentInBlockSongs(track))
-                    continue;
-
-                _fileteredRecomendedList.Add(track);
-            }
-            DataGridAudio.Items.Refresh();
-            if (!_workerDownload.IsBusy) // Показывать количество, только если ничего не скачивается.
-                TblProgressBar.Text = "Count: " + _fileteredRecomendedList.Count;
-        }
-
         private bool FailCurLang(Audio track)
         {
             if (RbtnLangRu.IsChecked == true)
@@ -303,6 +276,88 @@ namespace VkMusicDiscovery
             return (BlockedSongList.Any(a => (a.Artist == blockSong.Artist) &&
                                               (a.Title == blockSong.Title)));
         }
+
+        /// <summary>
+        /// Фильтрация текущего списка по языку и списку блокировки.
+        /// </summary>
+        private void FilterSongs()
+        {
+            _fileteredRecomendedList.Clear();
+            foreach (var track in _audiosRecomendedList)
+            {
+                if (FailCurLang(track))
+                    continue;
+
+                if (IsContentInBlockArtists(track))
+                    continue;
+
+                if (IsContentInBlockSongs(track))
+                    continue;
+
+                _fileteredRecomendedList.Add(track);
+            }
+            DataGridAudio.Items.Refresh();
+            if (!_workerDownload.IsBusy) // Показывать количество, только если ничего не скачивается.
+                TblProgressBar.Text = "Count: " + _fileteredRecomendedList.Count;
+        }
+
+        #endregion - Private methods -
+        //---------------------------------------------------------------------------------------------
+        #region - Event handlers -
+        private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            BtnDownloadall.Content = "Download All";
+            ProgressBarDownload.Value = 0;
+            TblProgressBar.Text = e.Cancelled ? "Canceled" : "Completed";
+        }
+
+        private void worker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            DownloadFiles();
+            if (_workerDownload.CancellationPending)
+            {
+                e.Cancel = true;
+            }
+        }
+        /// <summary>
+        /// Послать запрос на сервер за новым списком.
+        /// </summary>
+        private void BtnRefresh_OnClick(object sender, RoutedEventArgs e)
+        {
+            int count = Convert.ToInt32(TxbCount.Text);
+            bool random = CbxRandom.IsChecked.Value;
+            int offset = Convert.ToInt32(TxbOffset.Text);
+            _audiosRecomendedList = audioFunctions.GetRecommendations(count, random, offset);
+            FilterSongs();
+        }
+
+        private void BtnDownloadall_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (BtnDownloadall.Content == "Cancel")
+            {
+                _workerDownload.CancelAsync();
+
+                return;
+            }
+            
+            var dirDialog = new CommonOpenFileDialog {IsFolderPicker = true};
+            if (dirDialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                _directoryToDownload = dirDialog.FileName;
+                ProgressBarDownload.Maximum = _fileteredRecomendedList.Count;
+                ProgressBarDownload.Value = 0;
+                BtnDownloadall.Content = "Cancel";
+                _workerDownload.RunWorkerAsync();
+            }
+        }
+        /// <summary>
+        /// При смене фильтра языка - сразу его применить.
+        /// </summary>
+        private void RbtnsLang_OnChecked(object sender, RoutedEventArgs e)
+        {
+            FilterSongs();
+        }
+
         /// <summary>
         /// Добавление АРТИСТА в лист блокировки.
         /// </summary>
@@ -413,5 +468,6 @@ namespace VkMusicDiscovery
                 
             }
         }
+        #endregion - Event handlers -
     }
 }
