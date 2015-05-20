@@ -64,6 +64,10 @@ namespace VkMusicDiscovery
         /// </summary>
         private string _directoryToDownload;
 
+        private bool isAddDownToBlock;
+
+        private bool isReplaceBetterKbps;
+
         #endregion - Fields -
         //---------------------------------------------------------------------------------------------
         #region - Contructor -
@@ -229,13 +233,12 @@ namespace VkMusicDiscovery
 
                 if (fileName.Length > 250) //Если имя файла длинее 250 символов - обрезать.
                     fileName = fileName.Substring(0, 250);
+                Audio replaceAudio = track;
+                if (isReplaceBetterKbps)
+                    replaceAudio = audioFunctions.ReplaceWithBetterQuality(track);
 
-               // if (CbxBestBitrate.IsChecked == true)
-               //     audioFunctions.ReplaceWithBetterQuality(track);
-
-                WebClient webClient = new WebClient();
-                webClient.DownloadFile(track.Url, _directoryToDownload + '\\' + fileName);
-                if (CbxAddToBlock.IsChecked == true)
+                new WebClient().DownloadFile(replaceAudio.Url, _directoryToDownload + '\\' + fileName);
+                if (isAddDownToBlock)
                     BlockHeader(fileName, BlockTabType.Songs);
 
                 Dispatcher.Invoke(updateProgress, ProgressBar.ValueProperty, ++value);
@@ -309,6 +312,7 @@ namespace VkMusicDiscovery
             BtnDownloadall.Content = "Download All";
             ProgressBarDownload.Value = 0;
             TblProgressBar.Text = e.Cancelled ? "Canceled" : "Completed";
+            FilterSongs();
         }
 
         private void worker_DoWork(object sender, DoWorkEventArgs e)
@@ -347,6 +351,8 @@ namespace VkMusicDiscovery
                 ProgressBarDownload.Maximum = _fileteredRecomendedList.Count;
                 ProgressBarDownload.Value = 0;
                 BtnDownloadall.Content = "Cancel";
+                isAddDownToBlock = (bool)CbxAddToBlock.IsChecked;
+                isReplaceBetterKbps = (bool) CbxBestBitrate.IsChecked;
                 _workerDownload.RunWorkerAsync();
             }
         }
@@ -469,5 +475,6 @@ namespace VkMusicDiscovery
             }
         }
         #endregion - Event handlers -
+
     }
 }

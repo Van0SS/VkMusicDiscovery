@@ -15,11 +15,11 @@ namespace VkMusicDiscovery
         {
             _vkApi = new VkApi(token, userId);
         }
-        public void ReplaceWithBetterQuality(Audio audioToCompare)
+        public Audio ReplaceWithBetterQuality(Audio audioToCompare)
         {
             if (audioToCompare.Kbps >= 315)
-                return;
-            Audio replacedAudio = new Audio();
+                return audioToCompare;
+            Audio replacedAudio = audioToCompare;
             var finded = _vkApi.AudioSearch(audioToCompare.GetArtistDashTitle());
             CalcKbps(finded);
             foreach (var audioFinded in finded)
@@ -28,14 +28,13 @@ namespace VkMusicDiscovery
                     continue;
                 if (audioFinded.Kbps >= 315)
                 {
-                    audioToCompare = audioFinded;
-                    return;
+                    return audioFinded;
                 }
 
-                if (audioToCompare.Kbps < audioFinded.Kbps)
+                if (replacedAudio.Kbps < audioFinded.Kbps)
                     replacedAudio = audioFinded;
             }
-            audioToCompare = replacedAudio;
+            return replacedAudio;
         }
 
         public List<Audio> GetRecommendations(int count, bool random = false, int offset = 0)
