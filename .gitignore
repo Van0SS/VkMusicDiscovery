@@ -18,6 +18,18 @@ build/
 # Enable "build/" folder in the NuGet Packages folder since NuGet packages use it for MSBuild targets
 !packages/*/build/
 
+# Ignore NuGet Packages
+*.nupkg
+
+# Ignore the packages folder
+**/packages/*
+
+# except build/, which is used as an MSBuild target.
+!**/packages/build/
+
+# Uncomment if necessary however generally it will be regenerated when needed
+#!**/packages/repositories.config
+
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
