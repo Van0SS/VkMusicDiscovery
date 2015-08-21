@@ -22,7 +22,6 @@ namespace VkMusicDiscovery
                     _artist = "Va";
                 else
                 {
-                    _artist = Utils.ReplaceDash(value);
                     _artist = Utils.ToLowerButFirstUp(value);
                 }
 
@@ -57,7 +56,6 @@ namespace VkMusicDiscovery
                     _title = "Track 1"; //Самый известный трек.
                 else
                 {
-                    _title = Utils.ReplaceDash(value);
                     _title = Utils.ToLowerButFirstUp(value);
                 }
             }
@@ -91,7 +89,6 @@ namespace VkMusicDiscovery
                     _artist = "VA"; //Хороший исполнитель.
                 else
                 {
-                    _artist = Utils.ReplaceDash(value);
                     _artist = value;
                 }
             }
@@ -105,7 +102,6 @@ namespace VkMusicDiscovery
                     _title = "Track 1"; //Самый известный трек.
                 else
                 {
-                    _title = Utils.ReplaceDash(value);
                     _title = value;
                 }
             }
