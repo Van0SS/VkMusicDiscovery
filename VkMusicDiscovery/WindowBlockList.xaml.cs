@@ -10,12 +10,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using Microsoft.Win32;
 using VkMusicDiscovery.Enums;
 
@@ -39,7 +33,6 @@ namespace VkMusicDiscovery
         {
             Title = (_curTabType == BlockTabType.Artists ? Settings.PathCurUsedArtists : Settings.PathCurUsedSongs)
                 + " - " + TitleString;
-
         }
 
         private void Window_Activated(object sender, EventArgs e)
@@ -73,11 +66,19 @@ namespace VkMusicDiscovery
         /// <summary>
         /// Добавление в текущий лист.
         /// </summary>
-        private void BtnAdd_OnClick(object sender, RoutedEventArgs e)
+        private void BtnAddCollection_OnClick(object sender, RoutedEventArgs e)
         {
             var files = ShowOpenFileDialog(false, _curTabType);
             if (files == null) return;
             ParseFiles(files, _curTabType);
+            RefreshList(_curTabType);
+        }
+
+        private void BtnAddHeadersOnClick(object sender, RoutedEventArgs e)
+        {
+            var files = ShowOpenFileDialog(true, _curTabType, true);
+            if (files == null) return;
+            ParsreFilesHeaders(files, _curTabType);
             RefreshList(_curTabType);
         }
 
@@ -93,15 +94,23 @@ namespace VkMusicDiscovery
         }
 
         ///
-        private string[] ShowOpenFileDialog(bool multiselect, BlockTabType tabType)
+        private string[] ShowOpenFileDialog(bool multiselect, BlockTabType tabType, bool headers = false)
         {
             var loadDialog = new OpenFileDialog();
             loadDialog.Multiselect = multiselect;
-            var txtAllFilter = "|Text files (*.txt)|*.txt|All files (*.*)|*.*";
-            var avkFilter = "Artists files (*.avk)|*.avk" + txtAllFilter;
-            var svkFilter = "Songs files (*.svk)|*.svk" + txtAllFilter;
+            var txtFilter = "|Text files (*.txt)|*.txt";
+            var allFilter = "|All files (*.*)|*.*";
+            var avkFilter = "Artists files (*.avk)|*.avk" + txtFilter + allFilter;
+            var svkFilter = "Songs files (*.svk)|*.svk" + txtFilter + allFilter;
 
-            loadDialog.Filter = _curTabType == BlockTabType.Artists ? avkFilter : svkFilter;
+            var musicFilter = "Audio|*.mp3;*.wma;*.flac;*.m4a;*.aac;*.wav";
+
+            if (headers != true)
+                loadDialog.Filter = _curTabType == BlockTabType.Artists ? avkFilter : svkFilter;
+            else
+            {
+                loadDialog.Filter = (musicFilter + allFilter);
+            }
             if (loadDialog.ShowDialog() != true) return null;
             return loadDialog.FileNames;
 
@@ -112,7 +121,7 @@ namespace VkMusicDiscovery
             try
             {
                 ClearCurList();
-                _mainWindow.ParseFile(fileName, tabType);
+                _mainWindow.BlockCollection(fileName, tabType);
                 if (tabType == BlockTabType.Artists)
                     Settings.PathCurUsedArtists = fileName;
                 else
@@ -144,7 +153,7 @@ namespace VkMusicDiscovery
                 try
                 {
 #endif
-                _mainWindow.ParseFile(fileName, tabType);
+                _mainWindow.BlockCollection(fileName, tabType);
 #if !DEBUG
                 }
                 catch (Exception file)
@@ -159,6 +168,30 @@ namespace VkMusicDiscovery
             }
         }
 
+
+        private void ParsreFilesHeaders(string[] fileHeaders, BlockTabType tabType)
+        {
+            var wrongsFiles = "";
+            foreach (var fileHeader in fileHeaders)
+            {
+#if !DEBUG
+                try
+                {
+#endif
+                    _mainWindow.BlockHeader(fileHeader, tabType);
+#if !DEBUG
+                }
+                catch (Exception file)
+                {
+                    wrongsFiles += "\n" + file.Message;
+                }
+#endif
+            }
+            if (wrongsFiles != "")
+            {
+                MessageBox.Show("Next files headers can't parse:" + wrongsFiles);
+            }
+        }
         /// <summary>
         /// Экспорт в файл. utf-8
         /// </summary>

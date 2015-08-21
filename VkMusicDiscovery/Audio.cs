@@ -22,7 +22,6 @@ namespace VkMusicDiscovery
                     _artist = "Va";
                 else
                 {
-                    _artist = Utils.ReplaceDash(value);
                     _artist = Utils.ToLowerButFirstUp(value);
                 }
 
@@ -57,7 +56,6 @@ namespace VkMusicDiscovery
                     _title = "Track 1"; //Самый известный трек.
                 else
                 {
-                    _title = Utils.ReplaceDash(value);
                     _title = Utils.ToLowerButFirstUp(value);
                 }
             }
@@ -76,6 +74,7 @@ namespace VkMusicDiscovery
     {
         private string _artist;
         private string _title;
+        private int _kbps;
         public uint Id { get; set; }
         /// <summary>
         /// Идентификатор владельца аудиозаписи.
@@ -90,7 +89,6 @@ namespace VkMusicDiscovery
                     _artist = "VA"; //Хороший исполнитель.
                 else
                 {
-                    _artist = Utils.ReplaceDash(value);
                     _artist = value;
                 }
             }
@@ -104,8 +102,25 @@ namespace VkMusicDiscovery
                     _title = "Track 1"; //Самый известный трек.
                 else
                 {
-                    _title = Utils.ReplaceDash(value);
                     _title = value;
+                }
+            }
+        }
+
+        public int Kbps
+        {
+            get { return _kbps; }
+            set
+            {
+                if (value >= 320)
+                    _kbps = 320;
+                else if (value <= 0)
+                {
+                    throw new Exception("Value must be above 0");
+                }
+                else
+                {
+                    _kbps = value;
                 }
             }
         }
@@ -119,6 +134,8 @@ namespace VkMusicDiscovery
         /// Идентификатор альбома, в котором находится аудиозапись (если присвоен).
         /// </summary>
         public AudioGenre? GenreId { get; set; }
+
+
 
         public string GetArtistDashTitle()
         {
