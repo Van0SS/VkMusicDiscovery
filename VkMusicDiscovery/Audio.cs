@@ -70,36 +70,53 @@ namespace VkMusicDiscovery
         { }
     }
 
+    /// <summary>
+    /// Класс песни в формате vk.
+    /// </summary>
     public class Audio
     {
-        private string _artist;
-        private string _title;
-        private int _kbps;
+        /// <summary>
+        /// ID песни.
+        /// </summary>
         public uint Id { get; set; }
         /// <summary>
         /// Идентификатор владельца аудиозаписи.
         /// </summary>
         public int OwnerId { get; set; }
+
+        private string _artist;
+        /// <summary>
+        /// Исполнитель.
+        /// </summary>
         public string Artist
         {
             get { return _artist; }
             set
             {
                 if (String.IsNullOrEmpty(value))
-                    _artist = "VA"; //Хороший исполнитель.
+                {
+                    _artist = "VA"; //Хороший исполнитель. +
+                }
                 else
                 {
                     _artist = value;
                 }
             }
         }
+
+        private string _title;
+        /// <summary>
+        /// Название песни.
+        /// </summary>
         public string Title
         {
             get { return _title; }
             set
             {
                 if (String.IsNullOrEmpty(value))
-                    _title = "Track 1"; //Самый известный трек.
+                {
+                    _title = "Track 1"; //Самый известный трек. +
+                }
                 else
                 {
                     _title = value;
@@ -107,36 +124,50 @@ namespace VkMusicDiscovery
             }
         }
 
+        private int _kbps;
+        /// <summary>
+        /// Качество в kbps.
+        /// </summary>
         public int Kbps
         {
             get { return _kbps; }
             set
             {
-               // if (value >= 320)
-                 //   _kbps = 320;
                 if (value <= 0)
                 {
                     throw new Exception("Value must be above 0");
                 }
                 else
                 {
-                    _kbps = value; //Пока мб >320 ибо с картинками.
+                    _kbps = value; //Может быть больше 320, т.к. это с картинкой!
                 }
             }
         }
+
+        /// <summary>
+        /// Длительность.
+        /// </summary>
         public uint Duration { get; set; }
+
+        /// <summary>
+        /// Ссылка на файл песни.
+        /// </summary>
         public Uri Url { get; set; }
+
         /// <summary>
         /// Идентификатор текста аудиозаписи (если доступно).
         /// </summary>
         public uint? LyricsId { get; set; }
+
         /// <summary>
-        /// Идентификатор альбома, в котором находится аудиозапись (если присвоен).
+        /// Идентификатор жанра песни (если присвоен).
         /// </summary>
         public AudioGenre? GenreId { get; set; }
 
-
-
+        /// <summary>
+        /// Вернуть название песни в формате Artist - Title.
+        /// </summary>
+        /// <returns></returns>
         public string GetArtistDashTitle()
         {
             return Artist + " - " + Title;

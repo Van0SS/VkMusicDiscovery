@@ -51,7 +51,7 @@ namespace VkMusicDiscovery
         /// </summary>
         public readonly List<ArtistTitleToBind> BlockedSongList = new List<ArtistTitleToBind>();
         /// <summary>
-        /// Воркер для ассинхронной загрузки файлов и оторжажения прогресс бара.
+        /// Воркер для ассинхронной загрузки файлов и отображения прогресс бара.
         /// </summary>
         private readonly BackgroundWorker _workerDownload;
 
@@ -336,7 +336,6 @@ namespace VkMusicDiscovery
             BtnDownloadall.Content = "Download All";
             ProgressBarDownload.Value = 0;
             TblProgressBar.Text = e.Cancelled ? "Canceled" : "Completed";
-            FilterSongs();
         }
 
         /// <summary>
