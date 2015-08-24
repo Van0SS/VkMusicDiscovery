@@ -86,6 +86,7 @@ namespace VkMusicDiscovery
 
             //Авторизация 
             WindowLogin windowLogin = new WindowLogin();
+            windowLogin.Autorize();
             windowLogin.ShowDialog();
             //Если форма была закрыта, и токен не передали то закрываем программу.
             if (windowLogin.AccessToken == null)
@@ -517,8 +518,7 @@ namespace VkMusicDiscovery
         private void BtnLogOut_OnClick(object sender, RoutedEventArgs e)
         {
             WindowLogin winLogout = new WindowLogin();
-            winLogout.Title.Text = "Log out manually:";
-            winLogout.WebBrowserLogin.Navigate("https://login.vk.com/?act=logout&hash=14466908cac58bbe4b&_origin=http://vk.com");
+            winLogout.LogOut();
             winLogout.Show();
         }
 
@@ -538,6 +538,17 @@ namespace VkMusicDiscovery
             }
         }
 
+        /// <summary>
+        /// Добавить песни в свои аудиозаписи.
+        /// </summary>
+        private void MenuItemAddToAudios_OnClick(object sender, RoutedEventArgs e)
+        {
+            List<Audio> audios = DataGridAudio.SelectedItems.Cast<Audio>().ToList();
+            audioFunctions.AddAudioToSongs(audios);
+        }
+
         #endregion - Event handlers -
+
+
     }
 }

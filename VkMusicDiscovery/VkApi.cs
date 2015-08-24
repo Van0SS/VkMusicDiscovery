@@ -20,7 +20,7 @@ namespace VkMusicDiscovery
         /// </summary>
         public string AccessToken = "";
 
-        public int LoginUserId;
+        public int? LoginUserId;
 
         private const string VkApiVersion = "v=5.28";
 
@@ -77,7 +77,6 @@ namespace VkMusicDiscovery
         /// <param name="targetAudio">На основе этой песни</param>
         public List<Audio> AudioGetRecommendations(int count = 100, bool shuffle = false, int offset = 0, int? userId = null,  string targetAudio = "")
         {
-
             var parameters = new NameValueCollection();
             List<Audio> audioList;
 
@@ -96,6 +95,27 @@ namespace VkMusicDiscovery
             if (!shuffle)
                 return audioList.OrderBy(x => x.Artist).ThenBy(x => x.Title).ToList();
             return audioList;
+        }
+
+        /// <summary>
+        /// Добавить песню себе в аудизаписи или группу.
+        /// </summary>
+        /// <param name="audioId">Ид песни</param>
+        /// <param name="ownerId">Владелец песни</param>
+        /// <param name="groupId">Добавить в Id_сообствество</param>
+        public void AudioAdd(uint audioId, int ownerId, int groupId = -1)
+        {
+            var parameters = new NameValueCollection();
+
+            parameters["audio_id"] = audioId.ToString();
+
+            parameters["owner_id"] = ownerId.ToString();
+            //Отправляем только отличные от стандартных параметры.
+            if (groupId != -1)
+                parameters["group_id"] = groupId.ToString();
+
+            XmlDocument result = ExecuteCommand("audio.add", parameters);
+
         }
 
         //Извечение данных из структуры вида:

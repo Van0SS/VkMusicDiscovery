@@ -102,7 +102,8 @@
                     <MenuItem Header="Block _song" Click="MenuItemBlockSong_OnClick"/>
                     <Separator/>
                     <MenuItem Header="Copy name" Click="MenuItemCopeName_OnClick"/>
-                    <MenuItem Header="Download" Click="MenuItemDownload_OnClick"></MenuItem>
+                    <MenuItem Header="Download" Click="MenuItemDownload_OnClick"/>
+                    <MenuItem Header="Add to audios" Click="MenuItemAddToAudios_OnClick" ToolTip="Specially for Toxa"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
         </DataGrid>

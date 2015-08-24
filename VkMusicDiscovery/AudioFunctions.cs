@@ -64,6 +64,14 @@ namespace VkMusicDiscovery
             return audios;
         }
 
+        public void AddAudioToSongs(List<Audio> audios)
+        {
+            foreach (var audio in audios)
+            {
+                _vkApi.AudioAdd(audio.Id, audio.OwnerId);
+            }
+        }
+
         #region - Private methods -
 
         /// <summary>

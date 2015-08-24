@@ -7,9 +7,17 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <TextBlock x:Name="Title" TextAlignment="Center">
-            Please log in:
-        </TextBlock>
-        <WebBrowser Grid.Row="1" x:Name="WebBrowserLogin" LoadCompleted="WebBrowserLogin_OnLoadCompleted"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <TextBlock x:Name="TbInstruction" TextAlignment="Center">
+                Please log in, or enter token:
+            </TextBlock>
+            <TextBox x:Name="TbxToken" Width="300"/>
+            <Button x:Name="BtnOk" Click="BtnOk_Click">
+                OK
+            </Button>
+        </StackPanel>
+
+        <WebBrowser Grid.Row="1" x:Name="WebBrowserLogin" LoadCompleted="WebBrowserLogin_OnLoadCompleted"
+                    Navigated="WebBrowserLogin_Navigated"/>
     </Grid>
 </Window>
