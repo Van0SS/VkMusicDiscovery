@@ -14,11 +14,7 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Artist" Width="*">
                             <DataGridTextColumn.Binding>
-                                <Binding Path="Artist" ValidatesOnDataErrors="True">
-                                    <!--<Binding.ValidationRules>
-                                        <local:TitleArtistValidationRule/>
-                                    </Binding.ValidationRules>-->
-                                </Binding>
+                                <Binding Path="Artist" ValidatesOnDataErrors="True"/>
                             </DataGridTextColumn.Binding>
                         </DataGridTextColumn>
                     </DataGrid.Columns>

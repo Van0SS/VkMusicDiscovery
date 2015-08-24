@@ -7,7 +7,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <TextBlock TextAlignment="Center">
+        <TextBlock x:Name="Title" TextAlignment="Center">
             Please log in:
         </TextBlock>
         <WebBrowser Grid.Row="1" x:Name="WebBrowserLogin" LoadCompleted="WebBrowserLogin_OnLoadCompleted"/>

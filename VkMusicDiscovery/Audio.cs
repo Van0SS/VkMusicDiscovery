@@ -112,15 +112,15 @@ namespace VkMusicDiscovery
             get { return _kbps; }
             set
             {
-                if (value >= 320)
-                    _kbps = 320;
-                else if (value <= 0)
+               // if (value >= 320)
+                 //   _kbps = 320;
+                if (value <= 0)
                 {
                     throw new Exception("Value must be above 0");
                 }
                 else
                 {
-                    _kbps = value;
+                    _kbps = value; //Пока мб >320 ибо с картинками.
                 }
             }
         }

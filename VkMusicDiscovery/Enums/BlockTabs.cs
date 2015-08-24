@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace VkMusicDiscovery.Enums
 {
+    /// <summary>
+    /// Тип блокировки
+    /// </summary>
     public enum BlockTabType
     {
         Artists,

@@ -11,18 +11,9 @@ namespace VkMusicDiscovery
     /// </summary>
     public partial class WindowLogin : Window
     {
-        private string _accessToken;
+        public string AccessToken { get; private set; }
 
-        public string AccessToken
-        {
-            get { return _accessToken; }
-        }
-
-        private int _userId;
-        public int UserId
-        {
-            get { return _userId; }
-        }
+        public int UserId { get; private set; }
 
         //Id приложения в ВК.
         private const int AppId = 4533969;
@@ -39,6 +30,7 @@ namespace VkMusicDiscovery
         {
             WebBrowserLogin.Navigate(String.Format("http://api.vk.com/oauth/authorize?client_id={0}&scope={1}&display=popup&response_type=token", AppId, Scope));
         }
+
         private void WebBrowserLogin_OnLoadCompleted(object sender, NavigationEventArgs e)
         {
             //Если url содержит токен, то забираем и выходим.
@@ -50,11 +42,11 @@ namespace VkMusicDiscovery
                 {
                     if (m.Groups["name"].Value == "access_token")
                     {
-                        _accessToken = m.Groups["value"].Value;
+                        AccessToken = m.Groups["value"].Value;
                     }
                     else if (m.Groups["name"].Value == "user_id")
                     {
-                        _userId = Convert.ToInt32(m.Groups["value"].Value);
+                        UserId = Convert.ToInt32(m.Groups["value"].Value);
                     }
                     else if (m.Groups["name"].Value == "expires_in")
                     {

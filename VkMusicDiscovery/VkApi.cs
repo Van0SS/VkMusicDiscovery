@@ -15,7 +15,11 @@ namespace VkMusicDiscovery
 {
     class VkApi
     {
+        /// <summary>
+        /// Токен доступа конкретного пользователя.
+        /// </summary>
         public string AccessToken = "";
+
         public int LoginUserId;
 
         private const string VkApiVersion = "v=5.28";
@@ -26,6 +30,17 @@ namespace VkMusicDiscovery
             LoginUserId = userId;
         }
 
+        /// <summary>
+        /// Поиск песен.
+        /// </summary>
+        /// <param name="searchString">Строка поиска</param>
+        /// <param name="count">Количество</param>
+        /// <param name="autoComplete">Исправлять ошибки</param>
+        /// <param name="lyrics">С текстом</param>
+        /// <param name="performerOnly">Только по исполнителю</param>
+        /// <param name="sort">Тип сортировки</param>
+        /// <param name="searchOwn">Только по песням юзера</param>
+        /// <param name="offset">Смещение</param>
         public List<Audio> AudioSearch(string searchString, int count = 10, bool autoComplete = true,
             bool lyrics = false, bool performerOnly = false, int sort = 2,bool searchOwn = false,
             int offset = 0)
@@ -52,6 +67,14 @@ namespace VkMusicDiscovery
             return parseXmlToAudios(audioSearchXml);
         }
 
+        /// <summary>
+        /// Выдать рекомендованные аудиозаписи.
+        /// </summary>
+        /// <param name="count">Количество</param>
+        /// <param name="shuffle">Рандом</param>
+        /// <param name="offset">Смещение</param>
+        /// <param name="userId">Ид юзера</param>
+        /// <param name="targetAudio">На основе этой песни</param>
         public List<Audio> AudioGetRecommendations(int count = 100, bool shuffle = false, int offset = 0, int? userId = null,  string targetAudio = "")
         {
 

@@ -7,15 +7,37 @@ using System.Threading.Tasks;
 
 namespace VkMusicDiscovery
 {
+    /// <summary>
+    /// Настройки приложения.
+    /// </summary>
     public static class Settings
     {
+        /// <summary>
+        /// Текущий список блокированных исполнителей.
+        /// </summary>
         public static string PathCurUsedArtists { get; set; }
+
+        /// <summary>
+        /// Текущий список блокированных песен.
+        /// </summary>
         public static string PathCurUsedSongs { get; set; }
+
+        /// <summary>
+        /// Значение громкости плеера (0-1)
+        /// </summary>
         public static double Volume { get; set; }
 
+        /// <summary>
+        /// Путь до файла с настройками.
+        /// </summary>
         private static readonly string SettingsPath = Directory.GetCurrentDirectory() + "\\VkMusicDiscoverySettings.settings";
+
+        /// <summary>
+        /// Считать настройки.
+        /// </summary>
         public static void ReadSettings()
         {
+            //Если файла настроек не обнаружено - создать новые
             if (!File.Exists(SettingsPath))
             {
                 PathCurUsedArtists = "New";
@@ -23,7 +45,7 @@ namespace VkMusicDiscovery
                 Volume = 0.7;
                 return;
             }
-                
+            //Считать настройки, если что-то не найдено - поставить дефолтные.
             using (var streamReader = new StreamReader(SettingsPath))
             {
                 if(!File.Exists(PathCurUsedArtists = streamReader.ReadLine()))
@@ -40,6 +62,9 @@ namespace VkMusicDiscovery
             }
         }
 
+        /// <summary>
+        /// Записать настройки.
+        /// </summary>
         public static void WriteSettings()
         {
             using (var streamWriter = new StreamWriter(SettingsPath))

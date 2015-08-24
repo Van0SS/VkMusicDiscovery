@@ -64,9 +64,18 @@ namespace VkMusicDiscovery
         /// </summary>
         private string _directoryToDownload;
 
+
+                //Это для текущей загрузки:
+        /// <summary>
+        /// Блокировать загруженные файлы
+        /// </summary>
         private bool isAddDownToBlock;
 
+        /// <summary>
+        /// Заменять загружаемые файлы
+        /// </summary>
         private bool isReplaceBetterKbps;
+                //
 
         #endregion - Fields -
         //---------------------------------------------------------------------------------------------
@@ -114,7 +123,7 @@ namespace VkMusicDiscovery
         #region - Public methods -
 
         /// <summary>
-        /// Добавить элементы из файла в лист блокировки.
+        /// Добавить элементы из коллекции в лист блокировки.
         /// </summary>
         /// <param name="fileName">Путь</param>
         /// <param name="tabType">Тип листа</param>
@@ -153,6 +162,11 @@ namespace VkMusicDiscovery
 #endif
         }
 
+        /// <summary>
+        /// Добавить в список блокировки по названию файла
+        /// </summary>
+        /// <param name="filePath">Путь до файла</param>
+        /// <param name="tabType">Тип блокировки</param>
         public void BlockHeader(string filePath, BlockTabType tabType)
         {
 #if !DEBUG
@@ -267,12 +281,18 @@ namespace VkMusicDiscovery
 
         }
 
+        /// <summary>
+        /// Проверка исполинетеля на наличие в списке блокировки
+        /// </summary>
         private bool IsContentInBlockArtists(Audio track)
         {
             var curArtist = Utils.ToLowerButFirstUp(track.Artist);
             return (BlockedArtistList.Any(a => a.Artist == curArtist));
         }
 
+        /// <summary>
+        /// Проверка песни на наличие в списке блокировки
+        /// </summary>
         private bool IsContentInBlockSongs(Audio track)
         {
             var blockSong = new ArtistTitleToBind(track.Artist, track.Title);
@@ -307,6 +327,10 @@ namespace VkMusicDiscovery
         #endregion - Private methods -
         //---------------------------------------------------------------------------------------------
         #region - Event handlers -
+        
+        /// <summary>
+        /// Отобразить исход закачки.
+        /// </summary>
         private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             BtnDownloadall.Content = "Download All";
@@ -315,6 +339,9 @@ namespace VkMusicDiscovery
             FilterSongs();
         }
 
+        /// <summary>
+        /// Скачивать файлы, с возможностью отмены.
+        /// </summary>
         private void worker_DoWork(object sender, DoWorkEventArgs e)
         {
             DownloadFiles();
@@ -323,6 +350,7 @@ namespace VkMusicDiscovery
                 e.Cancel = true;
             }
         }
+
         /// <summary>
         /// Послать запрос на сервер за новым списком.
         /// </summary>
@@ -335,9 +363,12 @@ namespace VkMusicDiscovery
             FilterSongs();
         }
 
+        /// <summary>
+        /// Скачивать, либо остановить загрузку.
+        /// </summary>
         private void BtnDownloadall_OnClick(object sender, RoutedEventArgs e)
         {
-            if (BtnDownloadall.Content == "Cancel")
+            if (_workerDownload.IsBusy)
             {
                 _workerDownload.CancelAsync();
 
@@ -438,12 +469,18 @@ namespace VkMusicDiscovery
             FilterSongs();
         }
 
+        /// <summary>
+        /// Скопировать "исполнитель - назавние" песни.
+        /// </summary>
         private void MenuItemCopeName_OnClick(object sender, RoutedEventArgs e)
         {
             var audio = (Audio)DataGridAudio.SelectedItem;
             Clipboard.SetText(audio.GetArtistDashTitle());
         }
 
+        /// <summary>
+        /// Сохранить листы блокировки и настройки при выходе.
+        /// </summary>
         private void MainWindow_OnClosing(object sender, CancelEventArgs e)
         {
             if (Settings.PathCurUsedArtists == "New")
@@ -461,8 +498,8 @@ namespace VkMusicDiscovery
             Settings.WriteSettings();
         }
 
-        //Temp
-        private void MenuItem_OnClick(object sender, RoutedEventArgs e)
+
+        private void MenuItemDownload_OnClick_OnClick(object sender, RoutedEventArgs e)
         {
             var dirDialog = new CommonOpenFileDialog {IsFolderPicker = true};
             if (dirDialog.ShowDialog() == CommonFileDialogResult.Ok)
@@ -474,7 +511,34 @@ namespace VkMusicDiscovery
                 
             }
         }
-        #endregion - Event handlers -
 
+                /// <summary>
+        /// Выйти из аккаунта.(Но пока только открыть браузер)
+        /// </summary>
+        private void BtnLogOut_OnClick(object sender, RoutedEventArgs e)
+        {
+            WindowLogin winLogout = new WindowLogin();
+            winLogout.Title.Text = "Log out manually:";
+            winLogout.WebBrowserLogin.Navigate("https://login.vk.com/?act=logout&hash=14466908cac58bbe4b&_origin=http://vk.com");
+            winLogout.Show();
+        }
+
+        /// <summary>
+        /// Скачать выделенные песни без отображения процесса.
+        /// </summary>
+        private void MenuItemDownload_OnClick(object sender, RoutedEventArgs e)
+        {
+            var dirDialog = new CommonOpenFileDialog { IsFolderPicker = true };
+            if (dirDialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                foreach (Audio audio in DataGridAudio.SelectedItems)
+                {
+                    new WebClient().DownloadFileAsync(audio.Url, dirDialog.FileName + '\\' + audio.GetArtistDashTitle() + ".mp3");
+                }
+
+            }
+        }
+
+        #endregion - Event handlers -
     }
 }

@@ -15,51 +15,103 @@ namespace VkMusicDiscovery
         {
             _vkApi = new VkApi(token, userId);
         }
+
+        //Но пока скорей всего лучшей картинкой...
         public Audio ReplaceWithBetterQuality(Audio audioToCompare)
         {
-            if (audioToCompare.Kbps >= 315)
+            var lengthDifference = 5; //Разница в 5 сек не существенна, скорей всего та же песня
+            //var enoughQuality = 315; //315 из 320 kbps вполне для mp3
+            var findSongCount = 10; //10 первые найденных песен хватит для анализа, и не сильно долго
+
+            calsAudioKbps(audioToCompare);
+            /*if (audioToCompare.Kbps >= enoughQuality) //Ушам хватит
+            {
                 return audioToCompare;
+            }*/
+
+            //Перед сравнением берём за основу текущую песню, потом заменяем её той, у которой лучше качество
             Audio replacedAudio = audioToCompare;
-            var finded = _vkApi.AudioSearch(audioToCompare.GetArtistDashTitle());
-            CalcKbps(finded);
+            var finded = _vkApi.AudioSearch(audioToCompare.GetArtistDashTitle(), findSongCount);
+
+            finded = deleteAnotherNameAudios(audioToCompare, finded);
+
+            if (finded.Count == 0)
+                return audioToCompare;
+
+            calsManyAudiosKbps(finded); //Считаем kbps найденных песен
             foreach (var audioFinded in finded)
             {
-                if (Math.Abs(audioToCompare.Duration - audioFinded.Duration) > 5)
+                //Сравнение длин песен
+                if (Math.Abs(audioToCompare.Duration - audioFinded.Duration) > lengthDifference)
                     continue;
-                if (audioFinded.Kbps >= 315)
-                {
-                    return audioFinded;
-                }
+                /* if (audioFinded.Kbps >= enoughQuality)
+                 {
+                     return audioToCompare;
+                 }*/
 
+                //Если у заменяемой песни хуже качество, то заменяем найденной
                 if (replacedAudio.Kbps < audioFinded.Kbps)
-                    replacedAudio = audioFinded;
+                {
+                    audioToCompare = audioFinded;
+                }
             }
-            return replacedAudio;
+            return audioToCompare;
         }
 
         public List<Audio> GetRecommendations(int count, bool random = false, int offset = 0)
         {
             var audios =  _vkApi.AudioGetRecommendations(count, random, offset);
-            CalcKbps(audios);
             return audios;
         }
 
-        private void CalcKbps(List<Audio> audios)
+        #region - Private methods -
+
+        /// <summary>
+        /// Оставить в листе песни, только у которых совпадает название.
+        /// </summary>
+        /// <param name="audio">Искомая песня</param>
+        /// <param name="findedAudios">Сравниваемые песени</param>
+        /// <returns></returns>
+        private List<Audio> deleteAnotherNameAudios(Audio audio, List<Audio> findedAudios)
         {
-            List<Audio> newAudios;
-            foreach (var audio in audios)
+            string nameLowerCase = audio.GetArtistDashTitle().ToLowerInvariant();
+            var songsAfterDelete = new List<Audio>();
+            foreach (var findedAudio in findedAudios)
             {
-                WebRequest request = HttpWebRequest.Create(audio.Url);
-                request.Method = "HEAD";
-                using (WebResponse response = request.GetResponse())
+                if (nameLowerCase == findedAudio.GetArtistDashTitle().ToLowerInvariant())
+                    songsAfterDelete.Add(findedAudio);
+            }
+            return songsAfterDelete;
+        }
+
+        private void calsAudioKbps(Audio audio)
+        {
+            if (audio.Kbps != 0)
+                return;
+            WebRequest request = HttpWebRequest.Create(audio.Url);
+            request.Method = "HEAD";
+            //Запрашиваем заголовок файла
+            using (WebResponse response = request.GetResponse())
+            {
+                long contentLength;
+                //Берём из заголовка mp3 параметр размера файла
+                if (long.TryParse(response.Headers.Get("Content-Length"), out contentLength))
                 {
-                    long contentLength;
-                    if (long.TryParse(response.Headers.Get("Content-Length"), out contentLength))
-                    {
-                        audio.Kbps = (int)((contentLength * 8 / 1024) / audio.Duration);
-                    }
+                    //Определиние kbps и качества картинки методом деления размера файла на длину песни
+                    audio.Kbps = (int)((contentLength * 8 / 1024) / audio.Duration); //TODO сделать считывание первых байт заголовка мп3
                 }
             }
         }
+
+        //Перегрузка не удалась
+        private void calsManyAudiosKbps(IList<Audio> audios)
+        {
+            foreach (var audio in audios)
+            {
+                calsAudioKbps(audio);
+            }
+        }
+
+        #endregion - Private methods -
     }
 }

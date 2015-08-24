@@ -102,7 +102,7 @@
                     <MenuItem Header="Block _song" Click="MenuItemBlockSong_OnClick"/>
                     <Separator/>
                     <MenuItem Header="Copy name" Click="MenuItemCopeName_OnClick"/>
-                    <MenuItem Header="Download" Click="MenuItem_OnClick"></MenuItem>
+                    <MenuItem Header="Download" Click="MenuItemDownload_OnClick"></MenuItem>
                 </ContextMenu>
             </DataGrid.ContextMenu>
         </DataGrid>
@@ -148,6 +148,7 @@
             <CheckBox x:Name="CbxBestBitrate" VerticalAlignment="Top" Margin="5,0">Find with best bitrate</CheckBox>
             <Button x:Name="BtnEditblocked" Click="BtnEditBlocked_OnClick">Edit blocked content</Button>
         </StackPanel>
-
+        <Button Grid.Column="1" Grid.Row="1" x:Name="BtnLogOut" VerticalAlignment="Bottom" Click="BtnLogOut_OnClick"
+                Content="Log out" Margin="5" ToolTip="After exit token will be deleted"/>
     </Grid>
 </Window>

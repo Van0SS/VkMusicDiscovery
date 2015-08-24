@@ -24,11 +24,15 @@ namespace VkMusicDiscovery
         private const string TitleString = "Block list";
 
         private BlockTabType _curTabType = BlockTabType.Artists;
+
         public WindowBlockList()
         {
             InitializeComponent();
         }
 
+        /// <summary>
+        /// Установить в заголовок окна название текущего файла блокировки.
+        /// </summary>
         private void SetTitle()
         {
             Title = (_curTabType == BlockTabType.Artists ? Settings.PathCurUsedArtists : Settings.PathCurUsedSongs)
@@ -49,6 +53,9 @@ namespace VkMusicDiscovery
             ClearCurList();
         }
 
+        /// <summary>
+        /// Очистить текущий лист
+        /// </summary>
         private void ClearCurList()
         {
             if (_curTabType == BlockTabType.Artists)
@@ -64,7 +71,7 @@ namespace VkMusicDiscovery
         }
 
         /// <summary>
-        /// Добавление в текущий лист.
+        /// Добавление выбранной коллекции в текущий лист.
         /// </summary>
         private void BtnAddCollection_OnClick(object sender, RoutedEventArgs e)
         {
@@ -74,6 +81,9 @@ namespace VkMusicDiscovery
             RefreshList(_curTabType);
         }
 
+        /// <summary>
+        /// Добавление имён песне в текущий лист.
+        /// </summary>
         private void BtnAddHeadersOnClick(object sender, RoutedEventArgs e)
         {
             var files = ShowOpenFileDialog(true, _curTabType, true);
@@ -83,7 +93,7 @@ namespace VkMusicDiscovery
         }
 
         /// <summary>
-        /// Замещение текущего листа.
+        /// Выбрать новую коллекцию блокировки.
         /// </summary>
         private void BtnOpen_OnClick(object sender, RoutedEventArgs e)
         {
@@ -93,7 +103,13 @@ namespace VkMusicDiscovery
             RefreshList(_curTabType);
         }
 
-        ///
+        /// <summary>
+        /// Открыть диалог открытия файлов.
+        /// </summary>
+        /// <param name="multiselect">Можно ли выбрать много файлов</param>
+        /// <param name="tabType">Тип блокировки</param>
+        /// <param name="headers">Использовать файлы песен или листов</param>
+        /// <returns></returns>
         private string[] ShowOpenFileDialog(bool multiselect, BlockTabType tabType, bool headers = false)
         {
             var loadDialog = new OpenFileDialog();
@@ -116,6 +132,9 @@ namespace VkMusicDiscovery
 
         }
 
+        /// <summary>
+        /// Замещение текущего листа.
+        /// </summary>
         private void OpenFile(string fileName, BlockTabType tabType)
         {
             try
@@ -135,6 +154,9 @@ namespace VkMusicDiscovery
             }
         }
 
+        /// <summary>
+        /// Вручную обновить лист блокировки.
+        /// </summary>
         private void RefreshList(BlockTabType tabType)
         {
             if (tabType == BlockTabType.Artists)
@@ -143,6 +165,10 @@ namespace VkMusicDiscovery
                 DataGridSongs.Items.Refresh();
         }
 
+        /// <summary>
+        /// Добавить в список блокировки коллекции.
+        /// </summary>
+        /// <param name="fileNames">Коллекция</param>
         private void ParseFiles(string[] fileNames, BlockTabType tabType)
         {
             var wrongsFiles = "";
@@ -168,7 +194,11 @@ namespace VkMusicDiscovery
             }
         }
 
-
+        /// <summary>
+        /// Добавить в список блокировки названия песен.
+        /// </summary>
+        /// <param name="fileHeaders"></param>
+        /// <param name="tabType"></param>
         private void ParsreFilesHeaders(string[] fileHeaders, BlockTabType tabType)
         {
             var wrongsFiles = "";
@@ -192,8 +222,9 @@ namespace VkMusicDiscovery
                 MessageBox.Show("Next files headers can't parse:" + wrongsFiles);
             }
         }
+
         /// <summary>
-        /// Экспорт в файл. utf-8
+        /// Сохранить текущий список в файл.
         /// </summary>
         private void BtnSave_OnClick(object sender, RoutedEventArgs e)
         {
@@ -211,6 +242,9 @@ namespace VkMusicDiscovery
             }
         }
 
+        /// <summary>
+        /// Экспорт в новый файл. utf-8
+        /// </summary>
         private void SaveFile()
         {
             var saveDialog = new SaveFileDialog();
@@ -248,6 +282,10 @@ namespace VkMusicDiscovery
             SaveFile();
         }
 
+        /// <summary>
+        /// Новый файл списка блокировки.
+        /// </summary>
+        /// <param name="tabType"></param>
         private void NewFile(BlockTabType tabType)
         {
             ClearCurList();
@@ -262,6 +300,9 @@ namespace VkMusicDiscovery
             SetTitle();
         }
 
+        /// <summary>
+        /// Сменить вкладку
+        /// </summary>
         private void TabControlLists_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             _curTabType = TabControlLists.SelectedIndex == 0 ? BlockTabType.Artists : BlockTabType.Songs;
