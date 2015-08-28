@@ -354,12 +354,12 @@ namespace VkMusicDiscovery
         /// <summary>
         /// Послать запрос на сервер за новым списком.
         /// </summary>
-        private void BtnRefresh_OnClick(object sender, RoutedEventArgs e)
+        private async void BtnRefresh_OnClick(object sender, RoutedEventArgs e)
         {
             int count = Convert.ToInt32(TxbCount.Text);
             bool random = CbxRandom.IsChecked.Value;
             int offset = Convert.ToInt32(TxbOffset.Text);
-            _audiosRecomendedList = audioFunctions.GetRecommendations(count, random, offset);
+            _audiosRecomendedList = await audioFunctions.GetRecommendationsAsync(count, random, offset);
             FilterSongs();
         }
 

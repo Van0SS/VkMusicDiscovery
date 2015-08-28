@@ -152,7 +152,18 @@ namespace VkMusicDiscovery
                 curAudio.Artist = audioNode.SelectSingleNode("artist").InnerText;
                 curAudio.Title = audioNode.SelectSingleNode("title").InnerText;
                 curAudio.Duration = Convert.ToUInt32(audioNode.SelectSingleNode("duration").InnerText);
-                curAudio.Url = new Uri(audioNode.SelectSingleNode("url").InnerText);
+                var urlStr = audioNode.SelectSingleNode("url").InnerText;
+
+                //Если ссылка https
+                if (urlStr.StartsWith("https"))
+                    urlStr = urlStr.Remove(4, 1);
+                //Если после ссылки на песню идут параметры, например ?extra=..
+                if (urlStr.IndexOf("?") != -1)
+                {
+                    var sepIndx = urlStr.IndexOf("?");
+                    urlStr.Substring(0, sepIndx);
+                }
+                curAudio.Url = new Uri(urlStr);
 
                 var lyricsIdNode = audioNode.SelectSingleNode("lyrics_id");
                 if (lyricsIdNode != null) //Текст есть не у всех песен.

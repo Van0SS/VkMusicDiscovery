@@ -60,8 +60,12 @@ namespace VkMusicDiscovery
 
         public List<Audio> GetRecommendations(int count, bool random = false, int offset = 0)
         {
-            var audios =  _vkApi.AudioGetRecommendations(count, random, offset);
-            return audios;
+            return _vkApi.AudioGetRecommendations(count, random, offset);
+        }
+
+        public Task<List<Audio>> GetRecommendationsAsync(int count, bool random = false, int offset = 0)
+        {
+            return Task.Run( () => _vkApi.AudioGetRecommendations(count, random, offset));
         }
 
         public void AddAudioToSongs(List<Audio> audios)
